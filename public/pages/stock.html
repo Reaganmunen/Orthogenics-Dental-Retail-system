@@ -1,0 +1,1740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Stock — Orthogenics</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css"/>
+  <style>
+    :root {
+      --sidebar-w: 240px;
+      --brand:     #1a1a1a;
+      --brand-mid: #6b6b6b;
+      --bg-page:   #f5f5f3;
+      --bg-card:   #ffffff;
+      --border:    #e8e8e5;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+
+      --teal-50:  #E1F5EE;
+      --teal-600: #0F6E56;
+      --teal-800: #085041;
+
+      --amber-50:  #FAEEDA;
+      --amber-600: #854F0B;
+      --amber-800: #633806;
+
+      --red-50:  #FCEBEB;
+      --red-600: #A32D2D;
+
+      --blue-50:  #E6F1FB;
+      --blue-600: #185FA5;
+      --blue-800: #0C447C;
+
+      --purple-50:  #F3EEFB;
+      --purple-600: #6B21A8;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg-page);
+      color: var(--brand);
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--brand);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      z-index: 100;
+    }
+
+    .sidebar-logo {
+      padding: 1.5rem 1.25rem 1rem;
+      border-bottom: 1px solid #2a2a2a;
+    }
+
+    .sidebar-logo .logo-img {
+      width: 140px;
+      height: auto;
+      max-width: 100%;
+      object-fit: contain;
+    }
+
+    .logo-text {
+      display: flex;
+      flex-direction: column;
+      line-height: 1;
+    }
+
+    .logo-text .top    { font-size: 1.25rem; font-weight: 700; letter-spacing: 0.08em; color: #fff; }
+    .logo-text .bottom { font-size: 1.25rem; font-weight: 300; letter-spacing: 0.08em; color: #777; }
+    .logo-text .sub    { font-size: 0.6rem;  letter-spacing: 0.16em; color: #555; text-transform: uppercase; margin-top: 4px; }
+
+    .sidebar-nav {
+      flex: 1;
+      padding: 1rem 0;
+      overflow-y: auto;
+    }
+
+    .nav-section {
+      font-size: 0.62rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #444;
+      padding: 0.75rem 1.25rem 0.4rem;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0.55rem 1.25rem;
+      font-size: 0.85rem;
+      color: #999;
+      text-decoration: none;
+      border-radius: 0;
+      transition: color 0.15s, background 0.15s;
+      border-left: 3px solid transparent;
+    }
+
+    .nav-link i { font-size: 17px; }
+    .nav-link:hover  { color: #fff; background: rgba(255,255,255,0.04); }
+    .nav-link.active { color: #fff; border-left-color: #fff; background: rgba(255,255,255,0.06); }
+
+    .sidebar-user {
+      padding: 1rem 1.25rem;
+      border-top: 1px solid #2a2a2a;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .user-avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: #333;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 500; color: #aaa;
+      flex-shrink: 0;
+    }
+
+    .user-info .name  { font-size: 0.8rem; font-weight: 500; color: #ddd; }
+    .user-info .role  { font-size: 0.7rem; color: #666; }
+
+    .btn-logout {
+      margin-left: auto;
+      background: none; border: none;
+      color: #555; font-size: 16px;
+      cursor: pointer; padding: 4px;
+      transition: color 0.15s;
+    }
+    .btn-logout:hover { color: #aaa; }
+
+    /* ── Main content ── */
+    .main {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* ── Topbar ── */
+    .topbar {
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .topbar-left h1 {
+      font-size: 1.05rem;
+      font-weight: 500;
+      color: var(--brand);
+    }
+
+    .topbar-left .date {
+      font-size: 0.78rem;
+      color: var(--brand-mid);
+    }
+
+    .topbar-right { display: flex; align-items: center; gap: 12px; }
+
+    .topbar-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 6px 14px;
+      font-size: 0.82rem;
+      color: var(--brand);
+      cursor: pointer;
+      display: flex; align-items: center; gap: 6px;
+      transition: background 0.15s;
+    }
+    .topbar-btn:hover { background: var(--bg-page); }
+    .topbar-btn.primary {
+      background: var(--brand);
+      color: #fff;
+      border-color: var(--brand);
+    }
+    .topbar-btn.primary:hover { background: #333; }
+    .topbar-btn i { font-size: 15px; }
+
+    /* ── Page body ── */
+    .page-body {
+      padding: 2rem;
+      flex: 1;
+    }
+
+    /* ── Stat cards ── */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0,1fr));
+      gap: 14px;
+      margin-bottom: 1.75rem;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem 1.25rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .stat-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      color: var(--brand-mid);
+      text-transform: uppercase;
+    }
+
+    .stat-icon {
+      width: 34px; height: 34px;
+      border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 17px;
+    }
+
+    .stat-icon.teal   { background: var(--teal-50);   color: var(--teal-600); }
+    .stat-icon.amber  { background: var(--amber-50);  color: var(--amber-600); }
+    .stat-icon.red    { background: var(--red-50);    color: var(--red-600); }
+    .stat-icon.blue   { background: var(--blue-50);   color: var(--blue-600); }
+    .stat-icon.purple { background: var(--purple-50); color: var(--purple-600); }
+
+    .stat-value {
+      font-size: 1.65rem;
+      font-weight: 600;
+      color: var(--brand);
+      line-height: 1;
+    }
+
+    .stat-sub {
+      font-size: 0.75rem;
+      color: var(--brand-mid);
+    }
+
+    /* ── Section cards ── */
+    .section-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      margin-bottom: 1.25rem;
+    }
+
+    .section-head {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .section-head h2 {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--brand);
+    }
+
+    .section-head a {
+      font-size: 0.78rem;
+      color: var(--brand-mid);
+      text-decoration: none;
+    }
+    .section-head a:hover { color: var(--brand); }
+
+    /* ── Tabs ── */
+    .tab-bar {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-card);
+      padding: 0 1.25rem;
+    }
+
+    .tab-btn {
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      padding: 0.75rem 1rem;
+      font-size: 0.84rem;
+      color: var(--brand-mid);
+      cursor: pointer;
+      margin-bottom: -1px;
+      display: flex; align-items: center; gap: 6px;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .tab-btn:hover { color: var(--brand); }
+    .tab-btn.active { color: var(--brand); border-bottom-color: var(--brand); font-weight: 500; }
+    .tab-btn .tab-count {
+      background: var(--bg-page);
+      border: 1px solid var(--border);
+      font-size: 0.68rem;
+      font-weight: 500;
+      padding: 1px 6px;
+      border-radius: 10px;
+      color: var(--brand-mid);
+    }
+    .tab-btn.active .tab-count {
+      background: var(--brand);
+      color: #fff;
+      border-color: var(--brand);
+    }
+
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    /* ── Filters bar ── */
+    .filters-bar {
+      padding: 0.85rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .search-wrap {
+      position: relative;
+      flex: 1;
+      min-width: 180px;
+      max-width: 320px;
+    }
+    .search-wrap i {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 15px;
+      color: var(--brand-mid);
+      pointer-events: none;
+    }
+    .search-wrap input {
+      width: 100%;
+      padding: 7px 10px 7px 32px;
+      font-size: 0.83rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--bg-page);
+      color: var(--brand);
+      outline: none;
+    }
+    .search-wrap input:focus { border-color: #aaa; background: #fff; }
+
+    .filter-select {
+      padding: 7px 10px;
+      font-size: 0.83rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--bg-page);
+      color: var(--brand);
+      cursor: pointer;
+      outline: none;
+    }
+    .filter-select:focus { border-color: #aaa; }
+
+    .filter-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 7px 12px;
+      font-size: 0.82rem;
+      color: var(--brand-mid);
+      cursor: pointer;
+      display: flex; align-items: center; gap: 5px;
+      transition: background 0.15s, color 0.15s;
+    }
+    .filter-btn:hover { background: var(--bg-page); color: var(--brand); }
+    .filter-btn.active { background: var(--brand); color: #fff; border-color: var(--brand); }
+
+    /* ── Data table ── */
+    .data-table { width: 100%; border-collapse: collapse; }
+
+    .data-table th {
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--brand-mid);
+      padding: 0.65rem 1.25rem;
+      text-align: left;
+      background: var(--bg-page);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    .data-table td {
+      padding: 0.85rem 1.25rem;
+      font-size: 0.84rem;
+      color: var(--brand);
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tbody tr:hover   { background: var(--bg-page); }
+
+    /* Stock level bar */
+    .stock-bar-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 140px;
+    }
+    .stock-bar {
+      flex: 1;
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .stock-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.3s;
+    }
+    .stock-bar-fill.ok      { background: var(--teal-600); }
+    .stock-bar-fill.warn    { background: #EF9F27; }
+    .stock-bar-fill.danger  { background: #E24B4A; }
+
+    .stock-qty { font-size: 0.8rem; color: var(--brand-mid); white-space: nowrap; }
+
+    /* ── Badges / pills ── */
+    .badge-pill {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 500;
+      padding: 3px 10px;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+    .badge-pill.ok      { background: var(--teal-50);   color: var(--teal-800); }
+    .badge-pill.warn    { background: var(--amber-50);  color: var(--amber-800); }
+    .badge-pill.danger  { background: var(--red-50);    color: var(--red-600); }
+    .badge-pill.blue    { background: var(--blue-50);   color: var(--blue-800); }
+    .badge-pill.purple  { background: var(--purple-50); color: var(--purple-600); }
+
+    /* Row action buttons */
+    .row-actions { display: flex; align-items: center; gap: 6px; }
+    .row-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 0.75rem;
+      color: var(--brand-mid);
+      cursor: pointer;
+      display: flex; align-items: center; gap: 4px;
+      transition: background 0.12s, color 0.12s;
+    }
+    .row-btn:hover { background: var(--bg-page); color: var(--brand); }
+    .row-btn.primary {
+      background: var(--brand);
+      color: #fff;
+      border-color: var(--brand);
+    }
+    .row-btn.primary:hover { background: #333; }
+
+    /* ── Alert banner ── */
+    .alert-banner {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0.75rem 1.25rem;
+      background: var(--amber-50);
+      border-bottom: 1px solid #F0DCAD;
+      font-size: 0.83rem;
+      color: var(--amber-800);
+    }
+    .alert-banner i { font-size: 16px; flex-shrink: 0; }
+    .alert-banner a { color: var(--amber-800); font-weight: 500; }
+
+    /* ── Empty state ── */
+    .empty-state {
+      padding: 3rem 1.25rem;
+      text-align: center;
+    }
+    .empty-state i {
+      font-size: 2rem;
+      color: var(--border);
+      margin-bottom: 0.75rem;
+      display: block;
+    }
+    .empty-state p {
+      font-size: 0.84rem;
+      color: var(--brand-mid);
+    }
+
+    /* ── Modal ── */
+    .modal-backdrop-custom {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .modal-backdrop-custom.open { display: flex; }
+
+    .modal-box {
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+      overflow: hidden;
+      animation: modal-in 0.18s ease;
+    }
+    @keyframes modal-in {
+      from { opacity: 0; transform: translateY(12px) scale(0.98); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .modal-header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-header h3 { font-size: 0.95rem; font-weight: 600; }
+    .modal-close {
+      background: none; border: none;
+      font-size: 18px; color: var(--brand-mid);
+      cursor: pointer; padding: 2px;
+      transition: color 0.15s;
+    }
+    .modal-close:hover { color: var(--brand); }
+
+    .modal-body { padding: 1.5rem; }
+
+    .form-group { margin-bottom: 1.1rem; }
+    .form-group label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--brand-mid);
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 8px 12px;
+      font-size: 0.84rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--bg-page);
+      color: var(--brand);
+      outline: none;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus { border-color: #aaa; background: #fff; }
+    .form-group textarea { resize: vertical; min-height: 70px; }
+    .form-hint {
+      font-size: 0.73rem;
+      color: var(--brand-mid);
+      margin-top: 4px;
+    }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .modal-footer {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .btn-secondary {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 7px 18px;
+      font-size: 0.83rem;
+      color: var(--brand-mid);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-secondary:hover { background: var(--bg-page); color: var(--brand); }
+
+    .btn-primary {
+      background: var(--brand);
+      border: 1px solid var(--brand);
+      border-radius: var(--radius-md);
+      padding: 7px 18px;
+      font-size: 0.83rem;
+      color: #fff;
+      cursor: pointer;
+      display: flex; align-items: center; gap: 6px;
+      transition: background 0.15s;
+    }
+    .btn-primary:hover { background: #333; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Error / success message */
+    .form-msg {
+      padding: 8px 12px;
+      border-radius: var(--radius-md);
+      font-size: 0.8rem;
+      margin-bottom: 1rem;
+      display: none;
+    }
+    .form-msg.error   { background: var(--red-50);  color: var(--red-600);  display: block; }
+    .form-msg.success { background: var(--teal-50); color: var(--teal-600); display: block; }
+
+    /* Product context in modal */
+    .product-context {
+      background: var(--bg-page);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 0.85rem 1rem;
+      margin-bottom: 1.25rem;
+    }
+    .product-context .prod-name { font-size: 0.88rem; font-weight: 500; color: var(--brand); }
+    .product-context .prod-meta { font-size: 0.75rem; color: var(--brand-mid); margin-top: 2px; }
+
+    /* Adjustment type toggle */
+    .adj-type-toggle {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 1.1rem;
+    }
+    .adj-type-btn {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 10px;
+      text-align: center;
+      cursor: pointer;
+      font-size: 0.82rem;
+      color: var(--brand-mid);
+      background: var(--bg-page);
+      transition: all 0.12s;
+    }
+    .adj-type-btn:hover { border-color: #aaa; color: var(--brand); }
+    .adj-type-btn.active.add    { border-color: var(--teal-600); background: var(--teal-50); color: var(--teal-800); }
+    .adj-type-btn.active.remove { border-color: #E24B4A; background: var(--red-50); color: var(--red-600); }
+    .adj-type-btn i { font-size: 18px; display: block; margin-bottom: 4px; }
+
+    /* Loading skeleton */
+    .skeleton {
+      background: linear-gradient(90deg, #f0f0ee 25%, #e8e8e6 50%, #f0f0ee 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 4px;
+    }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+    /* Expiry warning dot */
+    .expiry-dot {
+      display: inline-block;
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      margin-right: 5px;
+      vertical-align: middle;
+    }
+    .expiry-dot.critical { background: #E24B4A; }
+    .expiry-dot.soon     { background: #EF9F27; }
+    .expiry-dot.ok       { background: var(--teal-600); }
+
+    /* ── Responsive ── */
+    @media (max-width: 1100px) {
+      .stat-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    }
+
+    @media (max-width: 768px) {
+      .sidebar      { transform: translateX(-100%); transition: transform 0.2s; }
+      .sidebar.open { transform: translateX(0); }
+      .main         { margin-left: 0; }
+      .stat-grid    { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .form-row     { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Sidebar ─────────────────────────────────────── -->
+<aside class="sidebar" id="sidebar">
+
+  <div class="sidebar-logo">
+    <img class="logo-img" src="../assets/logo.png" alt="Orthogenics" id="sidebarLogo"/>
+    <div class="logo-text" id="logoFallback" style="display:none">
+      <span class="top">ORTHO</span>
+      <span class="bottom">GENICS</span>
+      <span class="sub">Dental Supply Co.</span>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav" aria-label="Main navigation">
+    <div class="nav-section">Main</div>
+    <a href="dashboard.html" class="nav-link">
+      <i class="ti ti-layout-dashboard" aria-hidden="true"></i> Dashboard
+    </a>
+    <a href="order.html" class="nav-link">
+      <i class="ti ti-shopping-cart" aria-hidden="true"></i> Orders
+    </a>
+    <a href="invoices.html" class="nav-link">
+      <i class="ti ti-file-invoice" aria-hidden="true"></i> Invoices
+    </a>
+    <a href="payments.html" class="nav-link">
+      <i class="ti ti-credit-card" aria-hidden="true"></i> Payments
+    </a>
+
+    <div class="nav-section">Inventory</div>
+    <a href="products.html" class="nav-link">
+      <i class="ti ti-package" aria-hidden="true"></i> Products
+    </a>
+    <a href="stock.html" class="nav-link active">
+      <i class="ti ti-building-warehouse" aria-hidden="true"></i> Stock
+    </a>
+    <a href="suppliers.html" class="nav-link">
+      <i class="ti ti-truck" aria-hidden="true"></i> Suppliers
+    </a>
+
+    <div class="nav-section">People</div>
+    <a href="customers.html" class="nav-link">
+      <i class="ti ti-users" aria-hidden="true"></i> Customers
+    </a>
+
+    <div class="nav-section">Insights</div>
+    <a href="reports.html" class="nav-link">
+      <i class="ti ti-chart-bar" aria-hidden="true"></i> Reports
+    </a>
+  </nav>
+
+  <div class="sidebar-user">
+    <div class="user-avatar" id="userAvatar">--</div>
+    <div class="user-info">
+      <div class="name" id="userName">Loading...</div>
+      <div class="role" id="userRole">—</div>
+    </div>
+    <button class="btn-logout" id="logoutBtn" title="Sign out" aria-label="Sign out">
+      <i class="ti ti-logout" aria-hidden="true"></i>
+    </button>
+  </div>
+
+</aside>
+
+<!-- ── Main ────────────────────────────────────────── -->
+<div class="main">
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <h1>Stock</h1>
+      <div class="date" id="todayDate"></div>
+    </div>
+    <div class="topbar-right">
+      <button class="topbar-btn" onclick="openAdjustModal()">
+        <i class="ti ti-adjustments" aria-hidden="true"></i> Adjust stock
+      </button>
+      <button class="topbar-btn primary" onclick="openReceiveModal()">
+        <i class="ti ti-truck-delivery" aria-hidden="true"></i> Receive delivery
+      </button>
+    </div>
+  </header>
+
+  <!-- Page body -->
+  <main class="page-body">
+
+    <!-- Stat cards -->
+    <div class="stat-grid">
+
+      <div class="stat-card">
+        <div class="stat-card-top">
+          <span class="stat-label">Total products</span>
+          <div class="stat-icon blue"><i class="ti ti-package" aria-hidden="true"></i></div>
+        </div>
+        <div class="stat-value" id="statTotal">—</div>
+        <div class="stat-sub" id="statTotalSub">Loading...</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-card-top">
+          <span class="stat-label">Low stock</span>
+          <div class="stat-icon amber"><i class="ti ti-alert-triangle" aria-hidden="true"></i></div>
+        </div>
+        <div class="stat-value" id="statLow">—</div>
+        <div class="stat-sub" id="statLowSub">Loading...</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-card-top">
+          <span class="stat-label">Out of stock</span>
+          <div class="stat-icon red"><i class="ti ti-circle-x" aria-hidden="true"></i></div>
+        </div>
+        <div class="stat-value" id="statOut">—</div>
+        <div class="stat-sub" id="statOutSub">Loading...</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-card-top">
+          <span class="stat-label">Expiring soon</span>
+          <div class="stat-icon purple"><i class="ti ti-clock-exclamation" aria-hidden="true"></i></div>
+        </div>
+        <div class="stat-value" id="statExpiring">—</div>
+        <div class="stat-sub" id="statExpiringSub">Loading...</div>
+      </div>
+
+    </div>
+
+    <!-- Main section card with tabs -->
+    <div class="section-card">
+
+      <!-- Low stock alert banner (hidden when no alerts) -->
+      <div class="alert-banner" id="lowStockBanner" style="display:none">
+        <i class="ti ti-alert-triangle" aria-hidden="true"></i>
+        <span><strong id="bannerLowCount">0</strong> items are at or below their reorder point. <a href="#" onclick="switchTab('low'); return false;">View reorder list →</a></span>
+      </div>
+
+      <!-- Tab bar -->
+      <div class="tab-bar">
+        <button class="tab-btn active" onclick="switchTab('all')" id="tab-all">
+          <i class="ti ti-list" aria-hidden="true"></i> All stock
+          <span class="tab-count" id="cnt-all">—</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab('low')" id="tab-low">
+          <i class="ti ti-alert-triangle" aria-hidden="true"></i> Reorder list
+          <span class="tab-count" id="cnt-low">—</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab('expiring')" id="tab-expiring">
+          <i class="ti ti-clock-exclamation" aria-hidden="true"></i> Expiring soon
+          <span class="tab-count" id="cnt-expiring">—</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab('batches')" id="tab-batches">
+          <i class="ti ti-truck-delivery" aria-hidden="true"></i> Delivery history
+          <span class="tab-count" id="cnt-batches">—</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab('adjustments')" id="tab-adjustments">
+          <i class="ti ti-adjustments" aria-hidden="true"></i> Adjustments
+          <span class="tab-count" id="cnt-adjustments">—</span>
+        </button>
+      </div>
+
+      <!-- ── Tab: All stock ── -->
+      <div class="tab-pane active" id="pane-all">
+        <div class="filters-bar">
+          <div class="search-wrap">
+            <i class="ti ti-search" aria-hidden="true"></i>
+            <input type="text" placeholder="Search by name or SKU…" id="searchAll" oninput="renderAllStock()"/>
+          </div>
+          <select class="filter-select" id="filterStatus" onchange="renderAllStock()">
+            <option value="">All statuses</option>
+            <option value="ok">OK</option>
+            <option value="low">Low stock</option>
+            <option value="out">Out of stock</option>
+          </select>
+          <select class="filter-select" id="filterCategory" onchange="renderAllStock()">
+            <option value="">All categories</option>
+          </select>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>SKU</th>
+                <th>Category</th>
+                <th>Stock level</th>
+                <th>Unit</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="allStockTbody">
+              <tr><td colspan="7" style="padding:1.5rem 1.25rem; color:var(--brand-mid); font-size:0.84rem">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── Tab: Reorder list ── -->
+      <div class="tab-pane" id="pane-low">
+        <div class="filters-bar">
+          <div class="search-wrap">
+            <i class="ti ti-search" aria-hidden="true"></i>
+            <input type="text" placeholder="Search…" id="searchLow" oninput="renderLowStock()"/>
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>SKU</th>
+                <th>Supplier</th>
+                <th>Current stock</th>
+                <th>Reorder point</th>
+                <th>Deficit</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="lowStockTbody">
+              <tr><td colspan="7" style="padding:1.5rem 1.25rem; color:var(--brand-mid); font-size:0.84rem">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── Tab: Expiring soon ── -->
+      <div class="tab-pane" id="pane-expiring">
+        <div class="filters-bar">
+          <div class="search-wrap">
+            <i class="ti ti-search" aria-hidden="true"></i>
+            <input type="text" placeholder="Search…" id="searchExpiring" oninput="renderExpiring()"/>
+          </div>
+          <select class="filter-select" id="filterExpDays" onchange="loadExpiring()">
+            <option value="30">Expiring in 30 days</option>
+            <option value="60">Expiring in 60 days</option>
+            <option value="90">Expiring in 90 days</option>
+          </select>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>SKU</th>
+                <th>Batch received</th>
+                <th>Quantity in batch</th>
+                <th>Expiry date</th>
+                <th>Days left</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="expiringTbody">
+              <tr><td colspan="7" style="padding:1.5rem 1.25rem; color:var(--brand-mid); font-size:0.84rem">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── Tab: Delivery history ── -->
+      <div class="tab-pane" id="pane-batches">
+        <div class="filters-bar">
+          <div class="search-wrap">
+            <i class="ti ti-search" aria-hidden="true"></i>
+            <input type="text" placeholder="Search by product…" id="searchBatches" oninput="renderBatches()"/>
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Qty received</th>
+                <th>Expiry date</th>
+                <th>Delivery note</th>
+                <th>Received on</th>
+              </tr>
+            </thead>
+            <tbody id="batchesTbody">
+              <tr><td colspan="5" style="padding:1.5rem 1.25rem; color:var(--brand-mid); font-size:0.84rem">Select a product on the All stock tab to see delivery history.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── Tab: Adjustments ── -->
+      <div class="tab-pane" id="pane-adjustments">
+        <div class="filters-bar">
+          <div class="search-wrap">
+            <i class="ti ti-search" aria-hidden="true"></i>
+            <input type="text" placeholder="Search by product…" id="searchAdj" oninput="renderAdjustments()"/>
+          </div>
+          <select class="filter-select" id="filterReason" onchange="renderAdjustments()">
+            <option value="">All reasons</option>
+            <option value="DAMAGED">Damaged</option>
+            <option value="EXPIRED">Expired</option>
+            <option value="LOST">Lost</option>
+            <option value="SAMPLE_GIVEN">Sample given</option>
+            <option value="COUNT_CORRECTION">Count correction</option>
+            <option value="OTHER">Other</option>
+          </select>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Adjustment</th>
+                <th>Reason</th>
+                <th>Notes</th>
+                <th>Recorded by</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody id="adjustmentsTbody">
+              <tr><td colspan="6" style="padding:1.5rem 1.25rem; color:var(--brand-mid); font-size:0.84rem">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- end section-card -->
+
+  </main>
+</div>
+
+<!-- ─────────────────────────────────────────────────────────────── -->
+<!-- MODAL: Receive Delivery                                         -->
+<!-- ─────────────────────────────────────────────────────────────── -->
+<div class="modal-backdrop-custom" id="receiveModal" role="dialog" aria-modal="true" aria-labelledby="receiveModalTitle">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="receiveModalTitle"><i class="ti ti-truck-delivery" style="margin-right:6px;vertical-align:-2px"></i> Receive delivery</h3>
+      <button class="modal-close" onclick="closeModal('receiveModal')" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-msg" id="receiveMsg"></div>
+
+      <div class="form-group">
+        <label for="receiveProduct">Product *</label>
+        <select id="receiveProduct" onchange="onReceiveProductChange()">
+          <option value="">Select a product…</option>
+        </select>
+      </div>
+
+      <div class="product-context" id="receiveProductCtx" style="display:none">
+        <div class="prod-name" id="receiveCtxName">—</div>
+        <div class="prod-meta" id="receiveCtxMeta">Current stock: — · Reorder point: —</div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="receiveQty">Quantity received *</label>
+          <input type="number" id="receiveQty" min="1" placeholder="e.g. 50"/>
+        </div>
+        <div class="form-group">
+          <label for="receiveExpiry">Expiry date <span style="font-weight:400;text-transform:none">(if applicable)</span></label>
+          <input type="date" id="receiveExpiry"/>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="receiveNote">Delivery note / reference</label>
+        <input type="text" id="receiveNote" placeholder="e.g. DN-2026-0041"/>
+        <div class="form-hint">Optional — links this batch to a supplier delivery document.</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('receiveModal')">Cancel</button>
+      <button class="btn-primary" id="receiveSaveBtn" onclick="submitReceive()">
+        <i class="ti ti-check" aria-hidden="true"></i> Record delivery
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────────────────────────── -->
+<!-- MODAL: Adjust Stock                                             -->
+<!-- ─────────────────────────────────────────────────────────────── -->
+<div class="modal-backdrop-custom" id="adjustModal" role="dialog" aria-modal="true" aria-labelledby="adjustModalTitle">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="adjustModalTitle"><i class="ti ti-adjustments" style="margin-right:6px;vertical-align:-2px"></i> Adjust stock</h3>
+      <button class="modal-close" onclick="closeModal('adjustModal')" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-msg" id="adjustMsg"></div>
+
+      <div class="form-group">
+        <label for="adjustProduct">Product *</label>
+        <select id="adjustProduct" onchange="onAdjustProductChange()">
+          <option value="">Select a product…</option>
+        </select>
+      </div>
+
+      <div class="product-context" id="adjustProductCtx" style="display:none">
+        <div class="prod-name" id="adjustCtxName">—</div>
+        <div class="prod-meta" id="adjustCtxMeta">Current stock: —</div>
+      </div>
+
+      <!-- Add / Remove toggle -->
+      <div class="adj-type-toggle" id="adjTypeToggle">
+        <div class="adj-type-btn active add" onclick="setAdjType('add')" id="adjTypeAdd">
+          <i class="ti ti-plus"></i>
+          Add stock
+        </div>
+        <div class="adj-type-btn remove" onclick="setAdjType('remove')" id="adjTypeRemove">
+          <i class="ti ti-minus"></i>
+          Remove stock
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="adjustQty">Quantity *</label>
+          <input type="number" id="adjustQty" min="1" placeholder="e.g. 5"/>
+        </div>
+        <div class="form-group">
+          <label for="adjustReason">Reason *</label>
+          <select id="adjustReason">
+            <option value="">Select reason…</option>
+            <option value="COUNT_CORRECTION">Count correction</option>
+            <option value="DAMAGED">Damaged</option>
+            <option value="EXPIRED">Expired</option>
+            <option value="LOST">Lost</option>
+            <option value="SAMPLE_GIVEN">Sample given</option>
+            <option value="OTHER">Other</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="adjustNotes">Notes</label>
+        <textarea id="adjustNotes" placeholder="Optional — describe what happened…"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('adjustModal')">Cancel</button>
+      <button class="btn-primary" id="adjustSaveBtn" onclick="submitAdjust()">
+        <i class="ti ti-check" aria-hidden="true"></i> Save adjustment
+      </button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script>
+
+// ── Auth guard ────────────────────────────────────────────────────
+const token = localStorage.getItem('token');
+const user  = JSON.parse(localStorage.getItem('user') || 'null');
+
+if (!token || !user) window.location.href = 'login.html';
+
+// ── Populate user info ────────────────────────────────────────────
+if (user) {
+  const initials = user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  document.getElementById('userAvatar').textContent = initials;
+  document.getElementById('userName').textContent   = user.name;
+  document.getElementById('userRole').textContent   = user.role;
+}
+
+// ── Logo fallback ─────────────────────────────────────────────────
+const logoImg = document.getElementById('sidebarLogo');
+logoImg.onerror = () => {
+  logoImg.style.display = 'none';
+  document.getElementById('logoFallback').style.display = 'flex';
+};
+
+// ── Today's date ──────────────────────────────────────────────────
+document.getElementById('todayDate').textContent = new Date().toLocaleDateString('en-KE', {
+  weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+});
+
+// ── Logout ────────────────────────────────────────────────────────
+document.getElementById('logoutBtn').addEventListener('click', () => {
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  window.location.href = 'login.html';
+});
+
+// ── API helper ────────────────────────────────────────────────────
+async function apiFetch(path, opts = {}) {
+  const res = await fetch('/api' + path, {
+    ...opts,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + token,
+      ...(opts.headers || {}),
+    },
+  });
+  if (res.status === 401) { window.location.href = 'login.html'; return null; }
+  const data = await res.json();
+  if (!data.success) throw new Error(data.message || 'Request failed');
+  return data.data;
+}
+
+function fmtDate(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function daysUntil(dateStr) {
+  if (!dateStr) return null;
+  return Math.ceil((new Date(dateStr) - Date.now()) / 86400000);
+}
+
+// ── State ─────────────────────────────────────────────────────────
+let allProducts   = [];
+let lowProducts   = [];
+let expiringBatches = [];
+let allBatches    = [];   // recent deliveries across products
+let allAdjustments = [];
+let selectedProductForBatches = null;
+
+// ── Tab switching ─────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  document.getElementById('pane-' + name).classList.add('active');
+
+  if (name === 'expiring') loadExpiring();
+  if (name === 'batches' && !selectedProductForBatches) renderBatchesPlaceholder();
+  if (name === 'adjustments' && !allAdjustments.length) loadAdjustments();
+}
+
+// ── Load all products (stock view) ───────────────────────────────
+async function loadAllStock() {
+  try {
+    allProducts = await apiFetch('/products') || [];
+    document.getElementById('cnt-all').textContent = allProducts.length;
+
+    // Populate category filter
+    const cats = [...new Set(allProducts.map(p => p.category_name).filter(Boolean))].sort();
+    const catSel = document.getElementById('filterCategory');
+    catSel.innerHTML = '<option value="">All categories</option>' +
+      cats.map(c => `<option value="${c}">${c}</option>`).join('');
+
+    renderAllStock();
+    updateStats();
+  } catch (e) {
+    document.getElementById('allStockTbody').innerHTML =
+      `<tr><td colspan="7" style="padding:1.5rem 1.25rem; color:var(--red-600); font-size:0.84rem">Failed to load products.</td></tr>`;
+  }
+}
+
+function stockStatus(p) {
+  if (p.current_stock === 0) return 'out';
+  if (p.current_stock <= p.reorder_point) return 'low';
+  return 'ok';
+}
+
+function stockBadge(p) {
+  const s = stockStatus(p);
+  if (s === 'out') return '<span class="badge-pill danger">Out of stock</span>';
+  if (s === 'low') return '<span class="badge-pill warn">Low stock</span>';
+  return '<span class="badge-pill ok">OK</span>';
+}
+
+function stockBarHtml(p) {
+  const max = Math.max(p.reorder_point * 2, p.current_stock, 1);
+  const pct = Math.min(100, Math.round((p.current_stock / max) * 100));
+  const cls = stockStatus(p) === 'out' ? 'danger' : stockStatus(p) === 'low' ? 'warn' : 'ok';
+  return `
+    <div class="stock-bar-wrap">
+      <div class="stock-bar"><div class="stock-bar-fill ${cls}" style="width:${pct}%"></div></div>
+      <span class="stock-qty">${p.current_stock} / ${p.reorder_point}</span>
+    </div>`;
+}
+
+function renderAllStock() {
+  const q   = document.getElementById('searchAll').value.toLowerCase();
+  const st  = document.getElementById('filterStatus').value;
+  const cat = document.getElementById('filterCategory').value;
+
+  const filtered = allProducts.filter(p => {
+    if (q && !p.name.toLowerCase().includes(q) && !(p.sku || '').toLowerCase().includes(q)) return false;
+    if (cat && p.category_name !== cat) return false;
+    if (st && stockStatus(p) !== st) return false;
+    return true;
+  });
+
+  const tbody = document.getElementById('allStockTbody');
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><i class="ti ti-package"></i><p>No products match your filters.</p></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(p => `
+    <tr>
+      <td style="font-weight:500">${p.name}${p.brand ? `<br><span style="font-size:0.75rem;color:var(--brand-mid);font-weight:400">${p.brand}</span>` : ''}</td>
+      <td style="color:var(--brand-mid);font-size:0.8rem">${p.sku || '—'}</td>
+      <td style="color:var(--brand-mid);font-size:0.82rem">${p.category_name || '—'}</td>
+      <td>${stockBarHtml(p)}</td>
+      <td style="color:var(--brand-mid);font-size:0.8rem">${p.unit_of_measure || '—'}</td>
+      <td>${stockBadge(p)}</td>
+      <td>
+        <div class="row-actions">
+          <button class="row-btn primary" onclick="openReceiveModal(${p.id})">
+            <i class="ti ti-plus" aria-hidden="true"></i> Receive
+          </button>
+          <button class="row-btn" onclick="openAdjustModal(${p.id})">
+            <i class="ti ti-adjustments" aria-hidden="true"></i>
+          </button>
+          <button class="row-btn" onclick="viewBatches(${p.id}, '${escHtml(p.name)}')">
+            <i class="ti ti-history" aria-hidden="true"></i>
+          </button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+// ── Load low stock ────────────────────────────────────────────────
+async function loadLowStock() {
+  try {
+    lowProducts = await apiFetch('/stock/low') || [];
+    document.getElementById('cnt-low').textContent = lowProducts.length;
+
+    const statLow = lowProducts.length;
+    const statOut = lowProducts.filter(p => p.current_stock === 0).length;
+
+    document.getElementById('statLow').textContent = statLow;
+    document.getElementById('statLowSub').textContent = statLow
+      ? statLow + ' item' + (statLow !== 1 ? 's' : '') + ' need restocking'
+      : 'All items stocked';
+
+    document.getElementById('statOut').textContent = statOut;
+    document.getElementById('statOutSub').textContent = statOut
+      ? statOut + ' product' + (statOut !== 1 ? 's' : '') + ' unavailable'
+      : 'No out-of-stock items';
+
+    if (statLow > 0) {
+      document.getElementById('lowStockBanner').style.display = 'flex';
+      document.getElementById('bannerLowCount').textContent = statLow;
+    }
+
+    renderLowStock();
+  } catch (e) {
+    document.getElementById('lowStockTbody').innerHTML =
+      `<tr><td colspan="7" style="padding:1.5rem 1.25rem; color:var(--red-600); font-size:0.84rem">Failed to load.</td></tr>`;
+  }
+}
+
+function renderLowStock() {
+  const q = document.getElementById('searchLow').value.toLowerCase();
+  const filtered = lowProducts.filter(p =>
+    !q || p.name.toLowerCase().includes(q) || (p.sku || '').toLowerCase().includes(q)
+  );
+
+  const tbody = document.getElementById('lowStockTbody');
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><i class="ti ti-circle-check"></i><p>No items need restocking right now.</p></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(p => {
+    const deficit  = Math.max(0, p.reorder_point - p.current_stock);
+    const isOut    = p.current_stock === 0;
+    return `
+    <tr>
+      <td style="font-weight:500">${p.name}</td>
+      <td style="color:var(--brand-mid);font-size:0.8rem">${p.sku || '—'}</td>
+      <td style="color:var(--brand-mid);font-size:0.82rem">${p.supplier_name || '—'}</td>
+      <td>
+        <span style="font-weight:600;color:${isOut ? 'var(--red-600)' : 'var(--amber-600)'}">
+          ${p.current_stock}
+        </span>
+        <span style="color:var(--brand-mid);font-size:0.78rem"> ${p.unit_of_measure || ''}</span>
+      </td>
+      <td style="color:var(--brand-mid)">${p.reorder_point} ${p.unit_of_measure || ''}</td>
+      <td>
+        ${deficit > 0
+          ? `<span class="badge-pill ${isOut ? 'danger' : 'warn'}">−${deficit} ${p.unit_of_measure || ''}</span>`
+          : '<span class="badge-pill danger">Out of stock</span>'
+        }
+      </td>
+      <td>
+        <button class="row-btn primary" onclick="openReceiveModal(${p.id})">
+          <i class="ti ti-truck-delivery" aria-hidden="true"></i> Restock
+        </button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Load expiring ─────────────────────────────────────────────────
+async function loadExpiring() {
+  const days = document.getElementById('filterExpDays').value || 30;
+  try {
+    expiringBatches = await apiFetch('/stock/expiring?days=' + days) || [];
+    document.getElementById('cnt-expiring').textContent = expiringBatches.length;
+    document.getElementById('statExpiring').textContent = expiringBatches.length;
+    document.getElementById('statExpiringSub').textContent = expiringBatches.length
+      ? 'within ' + days + ' days'
+      : 'No items expiring soon';
+    renderExpiring();
+  } catch (e) {
+    document.getElementById('expiringTbody').innerHTML =
+      `<tr><td colspan="7" style="padding:1.5rem 1.25rem; color:var(--red-600); font-size:0.84rem">Failed to load.</td></tr>`;
+  }
+}
+
+function renderExpiring() {
+  const q = document.getElementById('searchExpiring').value.toLowerCase();
+  const filtered = expiringBatches.filter(b =>
+    !q || (b.product_name || '').toLowerCase().includes(q) || (b.sku || '').toLowerCase().includes(q)
+  );
+
+  const tbody = document.getElementById('expiringTbody');
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><i class="ti ti-calendar-check"></i><p>No batches expiring in this window.</p></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(b => {
+    const left = daysUntil(b.expiry_date);
+    const dotCls = left <= 7 ? 'critical' : left <= 30 ? 'soon' : 'ok';
+    const leftLabel = left === 0 ? 'Expires today' : left < 0 ? `${Math.abs(left)}d ago` : `${left}d left`;
+    return `
+    <tr>
+      <td style="font-weight:500">${b.product_name || '—'}</td>
+      <td style="color:var(--brand-mid);font-size:0.8rem">${b.sku || '—'}</td>
+      <td style="color:var(--brand-mid);font-size:0.82rem">${fmtDate(b.received_at)}</td>
+      <td>${b.quantity}</td>
+      <td>${fmtDate(b.expiry_date)}</td>
+      <td>
+        <span class="expiry-dot ${dotCls}"></span>
+        <span style="font-size:0.82rem;color:${dotCls === 'critical' ? 'var(--red-600)' : dotCls === 'soon' ? 'var(--amber-600)' : 'var(--teal-600)'}">
+          ${leftLabel}
+        </span>
+      </td>
+      <td>
+        <button class="row-btn" onclick="openAdjustModal(${b.product_id})" title="Adjust stock">
+          <i class="ti ti-adjustments" aria-hidden="true"></i>
+        </button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Delivery history per product ──────────────────────────────────
+async function viewBatches(productId, productName) {
+  selectedProductForBatches = productId;
+  switchTab('batches');
+  document.getElementById('batchesTbody').innerHTML =
+    `<tr><td colspan="5" style="padding:1.5rem 1.25rem; color:var(--brand-mid); font-size:0.84rem">Loading…</td></tr>`;
+
+  try {
+    const batches = await apiFetch('/stock/batches/' + productId) || [];
+    document.getElementById('cnt-batches').textContent = batches.length;
+
+    const tbody = document.getElementById('batchesTbody');
+    if (!batches.length) {
+      tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><i class="ti ti-truck"></i><p>No deliveries recorded for <strong>${escHtml(productName)}</strong> yet.</p></div></td></tr>`;
+      return;
+    }
+
+    // Update section head with product name
+    tbody.innerHTML = batches.map(b => `
+      <tr>
+        <td style="font-weight:500">${escHtml(productName)}</td>
+        <td style="font-weight:600;color:var(--teal-600)">+${b.quantity}</td>
+        <td>${b.expiry_date ? fmtDate(b.expiry_date) : '<span style="color:var(--brand-mid)">—</span>'}</td>
+        <td style="color:var(--brand-mid);font-size:0.82rem">${b.delivery_note || '—'}</td>
+        <td style="color:var(--brand-mid)">${fmtDate(b.received_at)}</td>
+      </tr>`).join('');
+  } catch (e) {
+    document.getElementById('batchesTbody').innerHTML =
+      `<tr><td colspan="5" style="padding:1.5rem 1.25rem; color:var(--red-600); font-size:0.84rem">Failed to load delivery history.</td></tr>`;
+  }
+}
+
+function renderBatchesPlaceholder() {
+  document.getElementById('batchesTbody').innerHTML =
+    `<tr><td colspan="5" style="padding:1.5rem 1.25rem; color:var(--brand-mid); font-size:0.84rem">Use the history button on any product in the All stock tab to view its delivery history.</td></tr>`;
+}
+
+// ── Adjustments ───────────────────────────────────────────────────
+async function loadAdjustments() {
+  // We load adjustments per product for this view; if no product is pre-selected
+  // we show a prompt, or load all via a product list approach.
+  // For the global view we fetch across all known products on-demand.
+  // Here we display the search-first approach with a prompt.
+  document.getElementById('adjustmentsTbody').innerHTML =
+    `<tr><td colspan="6" style="padding:1.5rem 1.25rem; color:var(--brand-mid); font-size:0.84rem">
+      Search for a product above to see its adjustment log. Use the adjust button on any product to record a new adjustment.
+    </td></tr>`;
+  document.getElementById('cnt-adjustments').textContent = '—';
+}
+
+let adjProductCache = {};
+
+async function loadAdjustmentsForProduct(productId, productName) {
+  if (adjProductCache[productId]) {
+    allAdjustments = adjProductCache[productId];
+    renderAdjustments(productName);
+    return;
+  }
+  try {
+    const adjs = await apiFetch('/stock/adjustments/' + productId) || [];
+    adjProductCache[productId] = adjs.map(a => ({ ...a, _productName: productName }));
+    allAdjustments = adjProductCache[productId];
+    renderAdjustments(productName);
+  } catch (e) {
+    document.getElementById('adjustmentsTbody').innerHTML =
+      `<tr><td colspan="6" style="padding:1.5rem 1.25rem; color:var(--red-600); font-size:0.84rem">Failed to load.</td></tr>`;
+  }
+}
+
+function renderAdjustments(productNameCtx) {
+  const q      = document.getElementById('searchAdj').value.toLowerCase();
+  const reason = document.getElementById('filterReason').value;
+
+  const filtered = allAdjustments.filter(a => {
+    if (reason && a.reason !== reason) return false;
+    if (q && !(a._productName || '').toLowerCase().includes(q)) return false;
+    return true;
+  });
+
+  document.getElementById('cnt-adjustments').textContent = filtered.length;
+
+  const tbody = document.getElementById('adjustmentsTbody');
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><i class="ti ti-adjustments"></i><p>No adjustments found.</p></div></td></tr>`;
+    return;
+  }
+
+  const reasonLabels = {
+    DAMAGED: 'Damaged', EXPIRED: 'Expired', LOST: 'Lost',
+    SAMPLE_GIVEN: 'Sample given', COUNT_CORRECTION: 'Count correction', OTHER: 'Other',
+  };
+
+  tbody.innerHTML = filtered.map(a => {
+    const isAdd   = a.quantity > 0;
+    const qty     = isAdd ? `+${a.quantity}` : `${a.quantity}`;
+    const qtyColor = isAdd ? 'var(--teal-600)' : 'var(--red-600)';
+    return `
+    <tr>
+      <td style="font-weight:500">${escHtml(a._productName || '—')}</td>
+      <td style="font-weight:600;color:${qtyColor}">${qty}</td>
+      <td><span class="badge-pill blue">${reasonLabels[a.reason] || a.reason}</span></td>
+      <td style="color:var(--brand-mid);font-size:0.82rem">${a.notes || '—'}</td>
+      <td style="color:var(--brand-mid);font-size:0.82rem">${a.recorded_by_name || '—'}</td>
+      <td style="color:var(--brand-mid)">${fmtDate(a.created_at)}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Stats update ──────────────────────────────────────────────────
+function updateStats() {
+  document.getElementById('statTotal').textContent = allProducts.length;
+  document.getElementById('statTotalSub').textContent = 'active products';
+}
+
+// ── Receive modal ─────────────────────────────────────────────────
+function populateProductDropdowns() {
+  const opts = allProducts.map(p =>
+    `<option value="${p.id}" data-stock="${p.current_stock}" data-reorder="${p.reorder_point}" data-name="${escHtml(p.name)}" data-sku="${escHtml(p.sku || '')}">${p.name}${p.sku ? ' — ' + p.sku : ''}</option>`
+  ).join('');
+  document.getElementById('receiveProduct').innerHTML = '<option value="">Select a product…</option>' + opts;
+  document.getElementById('adjustProduct').innerHTML  = '<option value="">Select a product…</option>' + opts;
+}
+
+function openReceiveModal(productId) {
+  clearModal('receiveModal');
+  document.getElementById('receiveModal').classList.add('open');
+  if (productId) {
+    document.getElementById('receiveProduct').value = productId;
+    onReceiveProductChange();
+  }
+}
+
+function onReceiveProductChange() {
+  const sel = document.getElementById('receiveProduct');
+  const opt = sel.options[sel.selectedIndex];
+  const ctx = document.getElementById('receiveProductCtx');
+  if (!sel.value) { ctx.style.display = 'none'; return; }
+  document.getElementById('receiveCtxName').textContent = opt.dataset.name;
+  document.getElementById('receiveCtxMeta').textContent =
+    `Current stock: ${opt.dataset.stock} · Reorder point: ${opt.dataset.reorder}`;
+  ctx.style.display = 'block';
+}
+
+async function submitReceive() {
+  const product_id    = document.getElementById('receiveProduct').value;
+  const quantity      = parseInt(document.getElementById('receiveQty').value);
+  const expiry_date   = document.getElementById('receiveExpiry').value || null;
+  const delivery_note = document.getElementById('receiveNote').value || null;
+
+  const msg = document.getElementById('receiveMsg');
+  msg.className = 'form-msg';
+
+  if (!product_id) { showMsg(msg, 'error', 'Please select a product.'); return; }
+  if (!quantity || quantity <= 0) { showMsg(msg, 'error', 'Enter a valid quantity greater than zero.'); return; }
+
+  const btn = document.getElementById('receiveSaveBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="ti ti-loader-2" aria-hidden="true"></i> Saving…';
+
+  try {
+    await apiFetch('/stock/receive', {
+      method: 'POST',
+      body: JSON.stringify({ product_id, quantity, expiry_date, delivery_note }),
+    });
+    showMsg(msg, 'success', 'Delivery recorded. Stock updated.');
+    setTimeout(() => {
+      closeModal('receiveModal');
+      refreshAll();
+    }, 1000);
+  } catch (e) {
+    showMsg(msg, 'error', e.message || 'Failed to record delivery.');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ti ti-check"></i> Record delivery';
+  }
+}
+
+// ── Adjust modal ──────────────────────────────────────────────────
+let adjType = 'add';
+
+function setAdjType(type) {
+  adjType = type;
+  document.getElementById('adjTypeAdd').classList.toggle('active', type === 'add');
+  document.getElementById('adjTypeAdd').classList.toggle('add', type === 'add');
+  document.getElementById('adjTypeRemove').classList.toggle('active', type === 'remove');
+  document.getElementById('adjTypeRemove').classList.toggle('remove', type === 'remove');
+}
+
+function openAdjustModal(productId) {
+  clearModal('adjustModal');
+  adjType = 'add';
+  setAdjType('add');
+  document.getElementById('adjustModal').classList.add('open');
+  if (productId) {
+    document.getElementById('adjustProduct').value = productId;
+    onAdjustProductChange();
+  }
+}
+
+function onAdjustProductChange() {
+  const sel = document.getElementById('adjustProduct');
+  const opt = sel.options[sel.selectedIndex];
+  const ctx = document.getElementById('adjustProductCtx');
+  if (!sel.value) { ctx.style.display = 'none'; return; }
+  document.getElementById('adjustCtxName').textContent = opt.dataset.name;
+  document.getElementById('adjustCtxMeta').textContent = `Current stock: ${opt.dataset.stock} ${opt.dataset.sku ? '· SKU: ' + opt.dataset.sku : ''}`;
+  ctx.style.display = 'block';
+}
+
+async function submitAdjust() {
+  const product_id = document.getElementById('adjustProduct').value;
+  const rawQty     = parseInt(document.getElementById('adjustQty').value);
+  const reason     = document.getElementById('adjustReason').value;
+  const notes      = document.getElementById('adjustNotes').value || null;
+
+  const msg = document.getElementById('adjustMsg');
+  msg.className = 'form-msg';
+
+  if (!product_id) { showMsg(msg, 'error', 'Please select a product.'); return; }
+  if (!rawQty || rawQty <= 0) { showMsg(msg, 'error', 'Enter a valid quantity greater than zero.'); return; }
+  if (!reason) { showMsg(msg, 'error', 'Please select a reason.'); return; }
+
+  const quantity = adjType === 'remove' ? -rawQty : rawQty;
+
+  const btn = document.getElementById('adjustSaveBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="ti ti-loader-2"></i> Saving…';
+
+  try {
+    await apiFetch('/stock/adjust', {
+      method: 'POST',
+      body: JSON.stringify({ product_id, quantity, reason, notes }),
+    });
+    showMsg(msg, 'success', 'Adjustment saved. Stock updated.');
+    setTimeout(() => {
+      closeModal('adjustModal');
+      refreshAll();
+    }, 1000);
+  } catch (e) {
+    showMsg(msg, 'error', e.message || 'Failed to save adjustment.');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ti ti-check"></i> Save adjustment';
+  }
+}
+
+// ── Helpers ───────────────────────────────────────────────────────
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+function clearModal(id) {
+  document.getElementById(id).querySelectorAll('input, select, textarea').forEach(el => {
+    if (el.tagName === 'SELECT') el.selectedIndex = 0;
+    else el.value = '';
+  });
+  const msg = document.getElementById(id.replace('Modal', 'Msg'));
+  if (msg) msg.className = 'form-msg';
+  document.querySelectorAll('.product-context').forEach(c => c.style.display = 'none');
+}
+
+function showMsg(el, type, text) {
+  el.textContent = text;
+  el.className   = 'form-msg ' + type;
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Close modal on backdrop click
+document.querySelectorAll('.modal-backdrop-custom').forEach(modal => {
+  modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('open'); });
+});
+
+// ── Refresh everything ────────────────────────────────────────────
+async function refreshAll() {
+  await Promise.all([ loadAllStock(), loadLowStock() ]);
+  populateProductDropdowns();
+  adjProductCache = {};  // clear so adjustments reload fresh
+}
+
+// ── Boot ──────────────────────────────────────────────────────────
+refreshAll().then(() => {
+  // Also kick off expiring count for the stat card
+  loadExpiring();
+});
+
+</script>
+</body>
+</html>

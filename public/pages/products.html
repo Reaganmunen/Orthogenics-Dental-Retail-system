@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes"/>
+  <title>Products — Orthogenics</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css"/>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --sidebar-w: 240px;
+      --brand: #1a1a1a;
+      --brand-mid: #6b6b6b;
+      --bg-page: #ffffff;
+      --bg-card: #ffffff;
+      --border: #e8e8e5;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --teal-50: #E1F5EE;
+      --teal-600: #0F6E56;
+      --amber-50: #FAEEDA;
+      --amber-600: #854F0B;
+      --red-50: #FCEBEB;
+      --red-600: #A32D2D;
+      --blue-50: #E6F1FB;
+      --blue-600: #185FA5;
+      --green-600: #2E7D32;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg-page);
+      color: var(--brand);
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--brand);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      z-index: 100;
+      flex-shrink: 0;
+    }
+
+    .sidebar-logo {
+      padding: 1.5rem 1.25rem 1rem;
+      border-bottom: 1px solid #2a2a2a;
+    }
+
+    .sidebar-logo .logo-img {
+      width: 140px;
+      height: auto;
+      max-width: 100%;
+      object-fit: contain;
+      filter: brightness(0) invert(1);
+      mix-blend-mode: screen;
+    }
+
+    .logo-text {
+      display: flex;
+      flex-direction: column;
+      line-height: 1;
+    }
+
+    .logo-text .top {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: #fff;
+    }
+
+    .logo-text .bottom {
+      font-size: 1.25rem;
+      font-weight: 300;
+      letter-spacing: 0.08em;
+      color: #777;
+    }
+
+    .logo-text .sub {
+      font-size: 0.6rem;
+      letter-spacing: 0.16em;
+      color: #555;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    .sidebar-nav {
+      flex: 1;
+      padding: 1rem 0;
+      overflow-y: auto;
+    }
+
+    .nav-section {
+      font-size: 0.62rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #444;
+      padding: 0.75rem 1.25rem 0.4rem;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0.55rem 1.25rem;
+      font-size: 0.85rem;
+      color: #999;
+      text-decoration: none;
+      border-left: 3px solid transparent;
+      transition: color 0.15s, background 0.15s;
+    }
+
+    .nav-link i {
+      font-size: 17px;
+    }
+
+    .nav-link:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .nav-link.active {
+      color: #fff;
+      border-left-color: #fff;
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .sidebar-user {
+      padding: 1rem 1.25rem;
+      border-top: 1px solid #2a2a2a;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #333;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 500;
+      color: #aaa;
+      flex-shrink: 0;
+    }
+
+    .user-info .name {
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #ddd;
+    }
+
+    .user-info .role {
+      font-size: 0.7rem;
+      color: #666;
+    }
+
+    .btn-logout {
+      margin-left: auto;
+      background: none;
+      border: none;
+      color: #555;
+      font-size: 16px;
+      cursor: pointer;
+      padding: 4px;
+      transition: color 0.15s;
+    }
+
+    .btn-logout:hover {
+      color: #aaa;
+    }
+
+    /* MAIN */
+    .main {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      width: calc(100% - var(--sidebar-w));
+      background: var(--bg-page);
+    }
+
+    .topbar {
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      padding: 0 1.75rem;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      width: 100%;
+    }
+
+    .topbar h1 {
+      font-size: 1.05rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-outline {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 7px 14px;
+      font-size: 0.84rem;
+      color: var(--brand);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s;
+      text-decoration: none;
+    }
+
+    .btn-outline:hover {
+      background: var(--bg-page);
+    }
+
+    .btn-primary {
+      background: var(--brand);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-md);
+      padding: 8px 18px;
+      font-size: 0.84rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s;
+    }
+
+    .btn-primary:hover {
+      background: #333;
+    }
+
+    .page-body {
+      padding: 1.5rem 1.75rem;
+      flex: 1;
+      width: 100%;
+    }
+
+    /* Stats cards */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 1.75rem;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .stat-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+    }
+
+    .stat-icon.products { background: var(--teal-50); color: var(--teal-600); }
+    .stat-icon.lowstock { background: var(--amber-50); color: var(--amber-600); }
+    .stat-icon.outstock { background: var(--red-50); color: var(--red-600); }
+    .stat-icon.categories { background: var(--blue-50); color: var(--blue-600); }
+
+    .stat-info .value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .stat-info .label {
+      font-size: 0.7rem;
+      color: var(--brand-mid);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-weight: 500;
+    }
+
+    /* Filter bar */
+    .filter-bar {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+    }
+
+    .search-wrap {
+      position: relative;
+      flex: 2;
+      min-width: 220px;
+    }
+
+    .search-wrap i {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 16px;
+      color: #bbb;
+    }
+
+    .search-wrap input {
+      width: 100%;
+      height: 40px;
+      padding: 0 12px 0 34px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      font-size: 0.85rem;
+      background: var(--bg-page);
+      outline: none;
+    }
+
+    .search-wrap input:focus {
+      border-color: var(--brand);
+      background: #fff;
+    }
+
+    .filter-select {
+      height: 40px;
+      padding: 0 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      font-size: 0.85rem;
+      background: var(--bg-page);
+      outline: none;
+      cursor: pointer;
+      min-width: 160px;
+    }
+
+    /* Table */
+    .table-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      width: 100%;
+    }
+
+    .table-header {
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .table-header h2 {
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    .table-count {
+      font-size: 0.78rem;
+      color: var(--brand-mid);
+    }
+
+    .product-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .product-table th {
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--brand-mid);
+      padding: 0.85rem 1rem;
+      text-align: left;
+      background: var(--bg-page);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    .product-table td {
+      padding: 0.9rem 1rem;
+      font-size: 0.84rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+
+    .product-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .product-table tbody tr {
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+
+    .product-table tbody tr:hover {
+      background: var(--bg-page);
+    }
+
+    /* Stock badges */
+    .stock-badge {
+      display: inline-block;
+      font-size: 0.73rem;
+      font-weight: 500;
+      padding: 3px 10px;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+
+    .stock-normal {
+      background: #EAF3DE;
+      color: #2E7D32;
+    }
+
+    .stock-low {
+      background: var(--amber-50);
+      color: var(--amber-600);
+    }
+
+    .stock-critical {
+      background: var(--red-50);
+      color: var(--red-600);
+    }
+
+    /* Action buttons */
+    .action-btn {
+      background: none;
+      border: none;
+      padding: 5px 8px;
+      cursor: pointer;
+      color: var(--brand-mid);
+      border-radius: var(--radius-md);
+      transition: all 0.15s;
+    }
+
+    .action-btn:hover {
+      background: var(--bg-page);
+      color: var(--brand);
+    }
+
+    .action-btn.delete:hover {
+      color: var(--red-600);
+      background: var(--red-50);
+    }
+
+    /* =============================================
+       APP MODAL — renamed from .modal to avoid
+       Bootstrap 5 class collision
+       ============================================= */
+    .app-modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .app-modal-overlay.open {
+      display: flex;
+    }
+
+    .app-modal {
+      background: white;
+      border-radius: var(--radius-lg);
+      width: 90%;
+      max-width: 600px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      position: relative;
+    }
+
+    .app-modal-header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      background: white;
+      z-index: 10;
+    }
+
+    .app-modal-header h2 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    .app-modal-close {
+      background: none;
+      border: none;
+      font-size: 28px;
+      cursor: pointer;
+      color: var(--brand-mid);
+      padding: 0;
+      line-height: 1;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .app-modal-close:hover {
+      color: var(--red-600);
+    }
+
+    .app-modal-body {
+      padding: 1.5rem;
+    }
+
+    .app-modal-footer {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      position: sticky;
+      bottom: 0;
+      background: white;
+    }
+
+    /* Form styles */
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--brand-mid);
+      margin-bottom: 0.35rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      font-size: 0.88rem;
+      font-family: inherit;
+      background: #fafafa;
+      outline: none;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      border-color: var(--brand);
+      background: #fff;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .empty-state {
+      padding: 3rem 1.5rem;
+      text-align: center;
+      color: var(--brand-mid);
+    }
+
+    .empty-state i {
+      font-size: 44px;
+      margin-bottom: 0.75rem;
+      opacity: 0.5;
+    }
+
+    /* Toast */
+    .toast-notification {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      background: var(--brand);
+      color: #fff;
+      padding: 0.75rem 1.25rem;
+      border-radius: var(--radius-md);
+      font-size: 0.84rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+      z-index: 1100;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.2s, transform 0.2s;
+      pointer-events: none;
+    }
+
+    .toast-notification.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .toast-notification.error {
+      background: var(--red-600);
+    }
+
+    @media (max-width: 900px) {
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .page-body {
+        padding: 1rem;
+      }
+      .filter-bar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .filter-select, .search-wrap {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <img id="sidebarLogo" src="../assets/logo.png" alt="Orthogenics" class="logo-img"
+         onerror="this.style.display='none';document.getElementById('logoFallback').style.display='flex'"/>
+    <div id="logoFallback" class="logo-text" style="display:none">
+      <span class="top">ORTHO</span>
+      <span class="bottom">GENICS</span>
+      <span class="sub">Dental Retail</span>
+    </div>
+  </div>
+  <aside class="sidebar" id="sidebar">
+
+  <div class="sidebar-logo">
+    <img class="logo-img" src="../assets/logo.png" alt="Orthogenics" id="sidebarLogo"/>
+    <div class="logo-text" id="logoFallback" style="display:none">
+      <span class="top">ORTHO</span>
+      <span class="bottom">GENICS</span>
+      <span class="sub">Dental Supply Co.</span>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav" aria-label="Main navigation">
+    <div class="nav-section">Main</div>
+    <a href="dashboard.html" class="nav-link active">
+      <i class="ti ti-layout-dashboard" aria-hidden="true"></i> Dashboard
+    </a>
+    <a href="order.html" class="nav-link">
+      <i class="ti ti-shopping-cart" aria-hidden="true"></i> Orders
+    </a>
+    <a href="invoices.html" class="nav-link">
+      <i class="ti ti-file-invoice" aria-hidden="true"></i> Invoices
+    </a>
+    <a href="payments.html" class="nav-link">
+      <i class="ti ti-credit-card" aria-hidden="true"></i> Payments
+    </a>
+
+    <div class="nav-section">Inventory</div>
+    <a href="products.html" class="nav-link">
+      <i class="ti ti-package" aria-hidden="true"></i> Products
+    </a>
+    <a href="stock.html" class="nav-link">
+      <i class="ti ti-building-warehouse" aria-hidden="true"></i> Stock
+    </a>
+    <a href="suppliers.html" class="nav-link">
+      <i class="ti ti-truck" aria-hidden="true"></i> Suppliers
+    </a>
+
+    <div class="nav-section">People</div>
+    <a href="customers.html" class="nav-link">
+      <i class="ti ti-users" aria-hidden="true"></i> Customers
+    </a>
+
+    <div class="nav-section">Insights</div>
+    <a href="reports.html" class="nav-link">
+      <i class="ti ti-chart-bar" aria-hidden="true"></i> Reports
+    </a>
+  </nav>
+
+  <div class="sidebar-user">
+    <div class="user-avatar" id="userAvatar">--</div>
+    <div class="user-info">
+      <div class="name" id="userName">Loading...</div>
+      <div class="role" id="userRole">—</div>
+    </div>
+    <button class="btn-logout" id="logoutBtn" title="Sign out" aria-label="Sign out">
+      <i class="ti ti-logout" aria-hidden="true"></i>
+    </button>
+  </div>
+
+</aside>
+</nav>
+
+<div class="main">
+  <header class="topbar">
+    <h1><i class="ti ti-package"></i> Products</h1>
+    <div class="topbar-right">
+      <button class="btn-primary" id="addProductBtn"><i class="ti ti-plus"></i> Add product</button>
+    </div>
+  </header>
+
+  <div class="page-body">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon products"><i class="ti ti-package"></i></div>
+        <div class="stat-info"><div class="value" id="totalProducts">–</div><div class="label">Total products</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon lowstock"><i class="ti ti-alert-triangle"></i></div>
+        <div class="stat-info"><div class="value" id="lowStockCount">–</div><div class="label">Low stock</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon outstock"><i class="ti ti-circle-x"></i></div>
+        <div class="stat-info"><div class="value" id="outStockCount">–</div><div class="label">Out of stock</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon categories"><i class="ti ti-category"></i></div>
+        <div class="stat-info"><div class="value" id="categoryCount">–</div><div class="label">Categories</div></div>
+      </div>
+    </div>
+
+    <div class="filter-bar">
+      <div class="search-wrap">
+        <i class="ti ti-search"></i>
+        <input type="text" id="searchInput" placeholder="Search by name, SKU, barcode..."/>
+      </div>
+      <select class="filter-select" id="categoryFilter">
+        <option value="">All categories</option>
+      </select>
+      <select class="filter-select" id="supplierFilter">
+        <option value="">All suppliers</option>
+      </select>
+    </div>
+
+    <div class="table-card">
+      <div class="table-header">
+        <h2>Product inventory</h2>
+        <span class="table-count" id="productCount">–</span>
+      </div>
+      <div style="overflow-x: auto;">
+        <table class="product-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>SKU</th>
+              <th>Category</th>
+              <th>Supplier</th>
+              <th>Stock</th>
+              <th>Buying (KES)</th>
+              <th>Min selling (KES)</th>
+              <th style="width: 80px">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="productsTbody">
+            <tr><td colspan="8" class="empty-state"><i class="ti ti-loader"></i><p>Loading products...</p></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD/EDIT PRODUCT MODAL — uses .app-modal-* classes to avoid Bootstrap collision -->
+<div class="app-modal-overlay" id="productModal">
+  <div class="app-modal">
+    <div class="app-modal-header">
+      <h2 id="modalTitle">Add product</h2>
+      <button class="app-modal-close" id="closeModalBtn">&times;</button>
+    </div>
+    <div class="app-modal-body">
+      <input type="hidden" id="productId"/>
+      <div class="form-row">
+        <div class="form-group"><label>Product name *</label><input type="text" id="prodName" placeholder="e.g., Composite Resin"/></div>
+        <div class="form-group"><label>Brand</label><input type="text" id="prodBrand" placeholder="Brand"/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>SKU</label><input type="text" id="prodSku" placeholder="Unique SKU"/></div>
+        <div class="form-group"><label>Barcode</label><input type="text" id="prodBarcode" placeholder="Barcode"/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Unit of measure</label>
+          <select id="prodUnit">
+            <option value="unit">Unit</option>
+            <option value="box">Box</option>
+            <option value="pack">Pack</option>
+            <option value="bottle">Bottle</option>
+            <option value="kg">kg</option>
+            <option value="piece">Piece</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Reorder point</label><input type="number" id="prodReorder" value="5" min="0"/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Buying price (KES) *</label><input type="number" id="prodBuying" step="0.01" min="0"/></div>
+        <div class="form-group"><label>Min selling price (KES) *</label><input type="number" id="prodMinSelling" step="0.01" min="0"/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Category *</label><select id="prodCategory"></select></div>
+        <div class="form-group"><label>Supplier *</label><select id="prodSupplier"></select></div>
+      </div>
+      <div class="form-group"><label>Expiry tracking</label>
+        <select id="prodTrackExpiry">
+          <option value="false">No</option>
+          <option value="true">Yes</option>
+        </select>
+      </div>
+    </div>
+    <div class="app-modal-footer">
+      <button class="btn-outline" id="cancelModalBtn">Cancel</button>
+      <button class="btn-primary" id="saveProductBtn"><i class="ti ti-device-floppy"></i> Save product</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-notification" id="toast"><i class="ti ti-check"></i><span id="toastMsg"></span></div>
+
+<script>
+  // AUTH
+  const token = localStorage.getItem('token');
+  const user = JSON.parse(localStorage.getItem('user') || 'null');
+  if (!token || !user) window.location.href = 'login.html';
+
+  const isAdmin = user?.role === 'ADMIN';
+
+  if (user) {
+    const initials = (user.name || 'User').split(' ').map(n => n[0]).join('').toUpperCase().slice(0,2);
+    document.getElementById('userAvatar').textContent = initials;
+    document.getElementById('userName').textContent = user.name;
+    document.getElementById('userRole').textContent = user.role;
+  }
+
+  document.getElementById('logoutBtn').addEventListener('click', () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = 'login.html';
+  });
+
+  // API HELPER
+  async function apiFetch(path, options = {}) {
+    try {
+      const res = await fetch('/api' + path, {
+        ...options,
+        headers: { 
+          'Authorization': 'Bearer ' + token, 
+          'Content-Type': 'application/json', 
+          ...(options.headers || {}) 
+        }
+      });
+      if (res.status === 401) { 
+        window.location.href = 'login.html'; 
+        return null; 
+      }
+      return res.json();
+    } catch (err) {
+      console.error('API fetch error:', err);
+      return null;
+    }
+  }
+
+  function fmtKES(n) { 
+    return 'KES ' + (Number(n || 0)).toLocaleString('en-KE'); 
+  }
+  
+  function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[m]);
+  }
+
+  let allProducts = [];
+  let categories = [];
+  let suppliers = [];
+
+  // LOAD PRODUCTS
+  async function loadProducts() {
+    const search = document.getElementById('searchInput').value.trim();
+    const category = document.getElementById('categoryFilter').value;
+    const supplier = document.getElementById('supplierFilter').value;
+
+    let url = '/products?';
+    if (search) url += 'search=' + encodeURIComponent(search) + '&';
+    if (category) url += 'category_id=' + category + '&';
+    if (supplier) url += 'supplier_id=' + supplier;
+
+    const data = await apiFetch(url);
+    if (data?.success) {
+      allProducts = data.data;
+      renderProducts();
+      updateStats();
+    }
+  }
+
+  async function loadCategories() {
+    const data = await apiFetch('/categories');
+    if (data?.success) {
+      categories = data.data;
+      const catSelect = document.getElementById('categoryFilter');
+      const prodCatSelect = document.getElementById('prodCategory');
+      catSelect.innerHTML = '<option value="">All categories</option>';
+      prodCatSelect.innerHTML = '';
+      categories.forEach(cat => {
+        catSelect.innerHTML += `<option value="${cat.id}">${escapeHtml(cat.name)}</option>`;
+        prodCatSelect.innerHTML += `<option value="${cat.id}">${escapeHtml(cat.name)}</option>`;
+      });
+      document.getElementById('categoryCount').innerText = categories.length;
+    }
+  }
+
+  async function loadSuppliers() {
+    const data = await apiFetch('/suppliers');
+    if (data?.success) {
+      suppliers = data.data;
+      const supSelect = document.getElementById('supplierFilter');
+      const prodSupSelect = document.getElementById('prodSupplier');
+      supSelect.innerHTML = '<option value="">All suppliers</option>';
+      prodSupSelect.innerHTML = '';
+      suppliers.forEach(sup => {
+        supSelect.innerHTML += `<option value="${sup.id}">${escapeHtml(sup.name)}</option>`;
+        prodSupSelect.innerHTML += `<option value="${sup.id}">${escapeHtml(sup.name)}</option>`;
+      });
+    }
+  }
+
+  function renderProducts() {
+    const tbody = document.getElementById('productsTbody');
+    document.getElementById('productCount').innerText = allProducts.length + ' product' + (allProducts.length !== 1 ? 's' : '');
+
+    if (allProducts.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><i class="ti ti-package-off"></i><p>No products found</p></td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = allProducts.map(prod => {
+      let stockClass = 'stock-normal';
+      let stockText = prod.current_stock + ' ' + (prod.unit_of_measure || 'unit');
+      if (prod.current_stock <= 0) {
+        stockClass = 'stock-critical';
+        stockText = 'OUT OF STOCK';
+      } else if (prod.current_stock <= prod.reorder_point) {
+        stockClass = 'stock-low';
+        stockText += ' (low)';
+      }
+
+      return `
+        <tr data-id="${prod.id}">
+          <td style="font-weight:500">${escapeHtml(prod.name)}${prod.brand ? '<br><small style="color:var(--brand-mid)">' + escapeHtml(prod.brand) + '</small>' : ''}</td>
+          <td><code style="font-size:0.75rem">${escapeHtml(prod.sku || '–')}</code></td>
+          <td>${escapeHtml(prod.category_name || '–')}</td>
+          <td>${escapeHtml(prod.supplier_name || '–')}</td>
+          <td><span class="stock-badge ${stockClass}">${stockText}</span></td>
+          <td>${fmtKES(prod.buying_price)}</td>
+          <td>${fmtKES(prod.min_selling_price)}</td>
+          <td>
+            ${isAdmin ? `
+              <button class="action-btn edit-product" data-id="${prod.id}" title="Edit"><i class="ti ti-edit"></i></button>
+              <button class="action-btn delete delete-product" data-id="${prod.id}" title="Delete"><i class="ti ti-trash"></i></button>
+            ` : '<span style="color:var(--brand-mid);font-size:0.7rem">View only</span>'}
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    // Edit button handlers
+    document.querySelectorAll('.edit-product').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        editProduct(parseInt(btn.dataset.id));
+      });
+    });
+
+    // Delete button handlers
+    document.querySelectorAll('.delete-product').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        deleteProduct(parseInt(btn.dataset.id));
+      });
+    });
+
+    // Row click navigation
+    document.querySelectorAll('#productsTbody tr[data-id]').forEach(row => {
+      row.addEventListener('click', (e) => {
+        if (e.target.closest('.action-btn')) return;
+        const productId = row.getAttribute('data-id');
+        window.location.href = `product-detail.html?id=${productId}`;
+      });
+    });
+  }
+
+  function updateStats() {
+    const total = allProducts.length;
+    const lowStock = allProducts.filter(p => p.current_stock > 0 && p.current_stock <= p.reorder_point).length;
+    const outStock = allProducts.filter(p => p.current_stock === 0).length;
+    document.getElementById('totalProducts').innerText = total;
+    document.getElementById('lowStockCount').innerText = lowStock;
+    document.getElementById('outStockCount').innerText = outStock;
+  }
+
+  // MODAL FUNCTIONS
+  const modal = document.getElementById('productModal');
+  const modalTitle = document.getElementById('modalTitle');
+  let editingId = null;
+
+  function openModal(editMode = false, product = null) {
+    editingId = editMode && product ? product.id : null;
+    modalTitle.innerText = editMode ? 'Edit product' : 'Add product';
+    
+    document.getElementById('productId').value = product?.id || '';
+    document.getElementById('prodName').value = product?.name || '';
+    document.getElementById('prodBrand').value = product?.brand || '';
+    document.getElementById('prodSku').value = product?.sku || '';
+    document.getElementById('prodBarcode').value = product?.barcode || '';
+    document.getElementById('prodUnit').value = product?.unit_of_measure || 'unit';
+    document.getElementById('prodReorder').value = product?.reorder_point ?? 5;
+    document.getElementById('prodBuying').value = product?.buying_price || '';
+    document.getElementById('prodMinSelling').value = product?.min_selling_price || '';
+    document.getElementById('prodCategory').value = product?.category_id || '';
+    document.getElementById('prodSupplier').value = product?.supplier_id || '';
+    document.getElementById('prodTrackExpiry').value = product?.tracks_expiry ? 'true' : 'false';
+    
+    modal.classList.add('open');
+  }
+
+  function closeModal() {
+    modal.classList.remove('open');
+    editingId = null;
+  }
+
+  async function editProduct(id) {
+    const product = allProducts.find(p => p.id == id);
+    if (product) openModal(true, product);
+  }
+
+  async function deleteProduct(id) {
+    if (!confirm('Delete this product? This action cannot be undone.')) return;
+    const res = await apiFetch('/products/' + id, { method: 'DELETE' });
+    if (res?.success) {
+      showToast('Product deleted successfully');
+      loadProducts();
+    } else {
+      showToast(res?.message || 'Delete failed', 'error');
+    }
+  }
+
+  async function saveProduct() {
+    const id = document.getElementById('productId').value;
+    const name = document.getElementById('prodName').value.trim();
+    const buying_price = parseFloat(document.getElementById('prodBuying').value);
+    const min_selling_price = parseFloat(document.getElementById('prodMinSelling').value);
+    const category_id = document.getElementById('prodCategory').value;
+    const supplier_id = document.getElementById('prodSupplier').value;
+
+    if (!name) { showToast('Product name is required', 'error'); return; }
+    if (isNaN(buying_price) || buying_price < 0) { showToast('Valid buying price required', 'error'); return; }
+    if (isNaN(min_selling_price) || min_selling_price < buying_price) { 
+      showToast('Min selling price cannot be less than buying price', 'error'); 
+      return; 
+    }
+    if (!category_id) { showToast('Category is required', 'error'); return; }
+    if (!supplier_id) { showToast('Supplier is required', 'error'); return; }
+
+    const payload = {
+      name,
+      brand: document.getElementById('prodBrand').value || null,
+      sku: document.getElementById('prodSku').value || null,
+      barcode: document.getElementById('prodBarcode').value || null,
+      unit_of_measure: document.getElementById('prodUnit').value,
+      buying_price,
+      min_selling_price,
+      reorder_point: parseInt(document.getElementById('prodReorder').value) || 5,
+      tracks_expiry: document.getElementById('prodTrackExpiry').value === 'true',
+      category_id: parseInt(category_id),
+      supplier_id: parseInt(supplier_id),
+    };
+
+    const url = id ? '/products/' + id : '/products';
+    const method = id ? 'PUT' : 'POST';
+    
+    const btn = document.getElementById('saveProductBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="ti ti-loader"></i> Saving...';
+    
+    const res = await apiFetch(url, { method, body: JSON.stringify(payload) });
+    
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ti ti-device-floppy"></i> Save product';
+    
+    if (res?.success) {
+      showToast(id ? 'Product updated' : 'Product created');
+      closeModal();
+      loadProducts();
+    } else {
+      showToast(res?.message || 'Operation failed', 'error');
+    }
+  }
+
+  // TOAST
+  let toastTimer;
+  function showToast(msg, type = 'success') {
+    const el = document.getElementById('toast');
+    const icon = el.querySelector('i');
+    document.getElementById('toastMsg').textContent = msg;
+    el.className = 'toast-notification show' + (type === 'error' ? ' error' : '');
+    icon.className = type === 'error' ? 'ti ti-alert-circle' : 'ti ti-check';
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+  }
+
+  // EVENT LISTENERS
+  document.getElementById('addProductBtn').addEventListener('click', () => openModal(false));
+  document.getElementById('closeModalBtn').addEventListener('click', closeModal);
+  document.getElementById('cancelModalBtn').addEventListener('click', closeModal);
+  document.getElementById('saveProductBtn').addEventListener('click', saveProduct);
+  document.getElementById('searchInput').addEventListener('input', () => setTimeout(loadProducts, 350));
+  document.getElementById('categoryFilter').addEventListener('change', loadProducts);
+  document.getElementById('supplierFilter').addEventListener('change', loadProducts);
+  
+  // Close modal when clicking outside
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeModal();
+  });
+
+  if (!isAdmin) {
+    document.getElementById('addProductBtn').style.display = 'none';
+  }
+
+  // INITIALIZE
+  Promise.all([loadCategories(), loadSuppliers()]).then(() => loadProducts());
+</script>
+</body>
+</html>

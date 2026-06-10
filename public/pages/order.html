@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Orders — Orthogenics</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css"/>
+  <style>
+    :root {
+      --sidebar-w: 240px;
+      --brand:     #1a1a1a;
+      --brand-mid: #6b6b6b;
+      --bg-page:   #ffffff;
+      --bg-card:   #ffffff;
+      --border:    #e8e8e5;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --teal-50:   #E1F5EE; --teal-600: #0F6E56; --teal-800: #085041;
+      --amber-50:  #FAEEDA; --amber-600: #854F0B; --amber-800: #633806;
+      --red-50:    #FCEBEB; --red-600:   #A32D2D;
+      --blue-50:   #E6F1FB; --blue-600:  #185FA5; --blue-800: #0C447C;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg-page); color: var(--brand); display: flex; min-height: 100vh; }
+
+    /* ── Sidebar ── */
+    .sidebar { width: var(--sidebar-w); background: var(--brand); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; z-index: 100; }
+    .sidebar-logo { padding: 1.5rem 1.25rem 1rem; border-bottom: 1px solid #2a2a2a; }
+    .sidebar-logo .logo-img { width: 140px; height: auto; max-width: 100%; object-fit: contain; filter: brightness(0) invert(1); mix-blend-mode: screen; }
+    .logo-text { display: flex; flex-direction: column; line-height: 1; }
+    .logo-text .top    { font-size: 1.25rem; font-weight: 700; letter-spacing: 0.08em; color: #fff; }
+    .logo-text .bottom { font-size: 1.25rem; font-weight: 300; letter-spacing: 0.08em; color: #777; }
+    .logo-text .sub    { font-size: 0.6rem; letter-spacing: 0.16em; color: #555; text-transform: uppercase; margin-top: 4px; }
+    .sidebar-nav { flex: 1; padding: 1rem 0; overflow-y: auto; }
+    .nav-section { font-size: 0.62rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: #444; padding: 0.75rem 1.25rem 0.4rem; }
+    .nav-link { display: flex; align-items: center; gap: 10px; padding: 0.55rem 1.25rem; font-size: 0.85rem; color: #999; text-decoration: none; border-left: 3px solid transparent; transition: color 0.15s, background 0.15s; }
+    .nav-link i { font-size: 17px; }
+    .nav-link:hover  { color: #fff; background: rgba(255,255,255,0.04); }
+    .nav-link.active { color: #fff; border-left-color: #fff; background: rgba(255,255,255,0.06); }
+    .sidebar-user { padding: 1rem 1.25rem; border-top: 1px solid #2a2a2a; display: flex; align-items: center; gap: 10px; }
+    .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: #333; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 500; color: #aaa; flex-shrink: 0; }
+    .user-info .name { font-size: 0.8rem; font-weight: 500; color: #ddd; }
+    .user-info .role { font-size: 0.7rem; color: #666; }
+    .btn-logout { margin-left: auto; background: none; border: none; color: #555; font-size: 16px; cursor: pointer; padding: 4px; transition: color 0.15s; }
+    .btn-logout:hover { color: #aaa; }
+
+    /* ── Main ── */
+    .main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+
+    /* ── Topbar ── */
+    .topbar { background: var(--bg-card); border-bottom: 1px solid var(--border); padding: 0 2rem; height: 60px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; }
+    .topbar h1 { font-size: 1.05rem; font-weight: 500; }
+    .topbar-right { display: flex; align-items: center; gap: 10px; }
+    .btn-primary { background: var(--brand); color: #fff; border: none; border-radius: var(--radius-md); padding: 8px 16px; font-size: 0.84rem; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: background 0.15s; }
+    .btn-primary:hover { background: #333; }
+    .btn-primary i { font-size: 16px; }
+    .btn-outline { background: none; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 7px 14px; font-size: 0.84rem; color: var(--brand); cursor: pointer; display: flex; align-items: center; gap: 6px; transition: background 0.15s; }
+    .btn-outline:hover { background: var(--bg-page); }
+
+    /* ── Page body ── */
+    .page-body { padding: 2rem; flex: 1; }
+
+    /* ── Filter bar ── */
+    .filter-bar { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; display: flex; align-items: center; gap: 12px; margin-bottom: 1.25rem; flex-wrap: wrap; }
+    .search-wrap { position: relative; flex: 1; min-width: 200px; }
+    .search-wrap i { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: 16px; color: #bbb; }
+    .search-wrap input { width: 100%; height: 38px; padding: 0 12px 0 34px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 0.84rem; background: var(--bg-page); color: var(--brand); outline: none; }
+    .search-wrap input:focus { border-color: var(--brand); background: #fff; }
+    .filter-select { height: 38px; padding: 0 10px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 0.84rem; color: var(--brand); background: var(--bg-page); outline: none; cursor: pointer; }
+    .filter-select:focus { border-color: var(--brand); }
+
+    /* ── Orders table card ── */
+    .table-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+    .table-head { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .table-head h2 { font-size: 0.9rem; font-weight: 500; }
+    .table-count { font-size: 0.78rem; color: var(--brand-mid); }
+    .orders-table { width: 100%; border-collapse: collapse; }
+    .orders-table th { font-size: 0.72rem; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; color: var(--brand-mid); padding: 0.65rem 1.25rem; text-align: left; background: var(--bg-page); border-bottom: 1px solid var(--border); white-space: nowrap; }
+    .orders-table td { padding: 0.85rem 1.25rem; font-size: 0.84rem; color: var(--brand); border-bottom: 1px solid var(--border); vertical-align: middle; }
+    .orders-table tr:last-child td { border-bottom: none; }
+    .orders-table tbody tr { cursor: pointer; transition: background 0.12s; }
+    .orders-table tbody tr:hover { background: var(--bg-page); }
+    .status-pill { display: inline-block; font-size: 0.7rem; font-weight: 500; padding: 3px 10px; border-radius: 20px; }
+    .status-pill.pending    { background: var(--amber-50); color: var(--amber-800); }
+    .status-pill.confirmed  { background: var(--blue-50);  color: var(--blue-800); }
+    .status-pill.dispatched { background: var(--teal-50);  color: var(--teal-800); }
+    .status-pill.complete   { background: #EAF3DE; color: #27500A; }
+    .status-pill.cancelled  { background: var(--red-50);   color: var(--red-600); }
+    .quote-badge { display: inline-block; font-size: 0.65rem; font-weight: 500; padding: 2px 6px; border-radius: 4px; background: #f1efe8; color: #5f5e5a; margin-left: 6px; }
+    .empty-state { padding: 3rem 1.25rem; text-align: center; color: var(--brand-mid); }
+    .empty-state i { font-size: 36px; margin-bottom: 0.75rem; display: block; color: #ddd; }
+    .empty-state p { font-size: 0.88rem; }
+
+    /* ── Modal overlay ── */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 200; align-items: flex-start; justify-content: center; padding: 2rem 1rem; overflow-y: auto; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: var(--bg-card); border-radius: var(--radius-lg); width: 100%; max-width: 760px; box-shadow: 0 8px 40px rgba(0,0,0,0.15); display: flex; flex-direction: column; }
+    .modal-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .modal-header h2 { font-size: 1rem; font-weight: 500; }
+    .modal-close { background: none; border: none; font-size: 20px; color: var(--brand-mid); cursor: pointer; padding: 2px; line-height: 1; }
+    .modal-close:hover { color: var(--brand); }
+    .modal-body { padding: 1.5rem; flex: 1; }
+    .modal-footer { padding: 1rem 1.5rem; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+
+    /* ── Form fields ── */
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+    .form-row.single { grid-template-columns: 1fr; }
+    .form-row.triple { grid-template-columns: 1fr 1fr 1fr; }
+    .field label { display: block; font-size: 0.75rem; font-weight: 500; color: var(--brand-mid); margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 0.04em; }
+    .field input, .field select, .field textarea { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 0.88rem; color: var(--brand); background: #fafafa; outline: none; transition: border-color 0.15s; font-family: inherit; }
+    .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--brand); background: #fff; }
+    .field textarea { resize: vertical; min-height: 70px; }
+    .toggle-row { display: flex; align-items: center; gap: 10px; margin-bottom: 1rem; }
+    .toggle-row label { font-size: 0.88rem; color: var(--brand); cursor: pointer; user-select: none; }
+
+    /* ── Product search inside modal ── */
+    .product-search-wrap { position: relative; margin-bottom: 1rem; }
+    .product-search-wrap i { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: 16px; color: #bbb; }
+    .product-search-wrap input { width: 100%; height: 40px; padding: 0 12px 0 34px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 0.88rem; background: #fafafa; color: var(--brand); outline: none; }
+    .product-search-wrap input:focus { border-color: var(--brand); background: #fff; }
+
+    /* Product dropdown */
+    .product-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: 0 4px 16px rgba(0,0,0,0.1); z-index: 10; max-height: 220px; overflow-y: auto; display: none; }
+    .product-dropdown.open { display: block; }
+    .pd-item { display: flex; align-items: center; justify-content: space-between; padding: 0.65rem 1rem; cursor: pointer; transition: background 0.12s; border-bottom: 1px solid var(--border); }
+    .pd-item:last-child { border-bottom: none; }
+    .pd-item:hover { background: var(--bg-page); }
+    .pd-name { font-size: 0.85rem; font-weight: 500; color: var(--brand); }
+    .pd-sku  { font-size: 0.72rem; color: var(--brand-mid); }
+    .pd-price { font-size: 0.82rem; color: var(--teal-600); font-weight: 500; }
+    .pd-stock { font-size: 0.7rem; color: var(--brand-mid); }
+    .pd-nostock { color: var(--red-600); }
+
+    /* ── Line items table ── */
+    .items-section { margin-top: 0.5rem; }
+    .items-label { font-size: 0.75rem; font-weight: 500; color: var(--brand-mid); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.6rem; }
+    .items-table { width: 100%; border-collapse: collapse; border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; }
+    .items-table th { font-size: 0.7rem; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; color: var(--brand-mid); padding: 0.55rem 0.9rem; text-align: left; background: var(--bg-page); border-bottom: 1px solid var(--border); }
+    .items-table td { padding: 0.6rem 0.9rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    .items-table tr:last-child td { border-bottom: none; }
+    .items-table input[type="number"] { width: 70px; padding: 5px 8px; border: 1px solid var(--border); border-radius: 5px; font-size: 0.84rem; color: var(--brand); background: #fafafa; outline: none; text-align: center; }
+    .items-table input[type="number"]:focus { border-color: var(--brand); background: #fff; }
+    .price-input-wrap { position: relative; }
+    .price-input-wrap span { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); font-size: 0.78rem; color: var(--brand-mid); }
+.price-input-wrap input { width: 120px; padding: 5px 8px 5px 30px; border: 1px solid var(--border); border-radius: 5px; font-size: 0.84rem; color: var(--brand); background: #fafafa; outline: none; -moz-appearance: textfield;appearance: textfield; }
+.price-input-wrap input::-webkit-outer-spin-button,
+.price-input-wrap input::-webkit-inner-spin-button { -webkit-appearance: none;appearance: none; margin: 0; }
+    .price-input-wrap input:focus { border-color: var(--brand); background: #fff; }
+    .price-input-wrap input.price-error { border-color: var(--red-600); background: var(--red-50); }
+    .line-total { font-size: 0.84rem; font-weight: 500; color: var(--brand); }
+    .btn-remove { background: none; border: none; color: #ccc; cursor: pointer; font-size: 16px; padding: 2px; transition: color 0.15s; }
+    .btn-remove:hover { color: var(--red-600); }
+    .empty-items { padding: 1.5rem; text-align: center; font-size: 0.84rem; color: var(--brand-mid); background: var(--bg-page); }
+
+    /* ── Order total bar ── */
+    .order-total-bar { margin-top: 1rem; background: var(--bg-page); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 0.85rem 1rem; display: flex; align-items: center; justify-content: flex-end; gap: 1.5rem; }
+    .total-item { display: flex; flex-direction: column; align-items: flex-end; }
+    .total-item .lbl { font-size: 0.7rem; color: var(--brand-mid); text-transform: uppercase; letter-spacing: 0.04em; }
+    .total-item .val { font-size: 1rem; font-weight: 600; color: var(--brand); }
+    .total-item .val.items-val { font-size: 0.88rem; font-weight: 400; }
+
+    /* ── Price floor tooltip ── */
+    .price-hint { font-size: 0.68rem; color: var(--brand-mid); margin-top: 2px; }
+    .price-hint.error { color: var(--red-600); }
+
+    /* ── Error / success toast ── */
+    .toast { position: fixed; bottom: 2rem; right: 2rem; padding: 0.75rem 1.25rem; border-radius: var(--radius-md); font-size: 0.84rem; font-weight: 500; color: #fff; z-index: 999; display: none; align-items: center; gap: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
+    .toast.show { display: flex; }
+    .toast.success { background: var(--teal-600); }
+    .toast.error   { background: var(--red-600); }
+
+    /* ── Pagination ── */
+    .pagination { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 1rem; }
+    .page-btn { background: none; border: 1px solid var(--border); border-radius: 6px; padding: 5px 12px; font-size: 0.8rem; color: var(--brand); cursor: pointer; }
+    .page-btn:hover { background: var(--bg-page); }
+    .page-btn.active { background: var(--brand); color: #fff; border-color: var(--brand); }
+    .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+
+<!-- ── Sidebar ── -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <img class="logo-img" src="../assets/logo.png" alt="Orthogenics" id="sidebarLogo"/>
+    <div class="logo-text" id="logoFallback" style="display:none">
+      <span class="top">ORTHO</span>
+      <span class="bottom">GENICS</span>
+      <span class="sub">Dental Supply Co.</span>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">Main</div>
+    <a href="dashboard.html" class="nav-link"><i class="ti ti-layout-dashboard" aria-hidden="true"></i> Dashboard</a>
+    <a href="order.html"    class="nav-link active"><i class="ti ti-shopping-cart" aria-hidden="true"></i> Orders</a>
+    <a href="invoices.html"  class="nav-link"><i class="ti ti-file-invoice" aria-hidden="true"></i> Invoices</a>
+    <a href="payments.html"  class="nav-link"><i class="ti ti-credit-card" aria-hidden="true"></i> Payments</a>
+    <div class="nav-section">Inventory</div>
+    <a href="products.html"  class="nav-link"><i class="ti ti-package" aria-hidden="true"></i> Products</a>
+    <a href="stock.html"     class="nav-link"><i class="ti ti-building-warehouse" aria-hidden="true"></i> Stock</a>
+    <a href="suppliers.html" class="nav-link"><i class="ti ti-truck" aria-hidden="true"></i> Suppliers</a>
+    <div class="nav-section">People</div>
+    <a href="customers.html" class="nav-link"><i class="ti ti-users" aria-hidden="true"></i> Customers</a>
+    <div class="nav-section">Insights</div>
+    <a href="reports.html"   class="nav-link"><i class="ti ti-chart-bar" aria-hidden="true"></i> Reports</a>
+  </nav>
+  <div class="sidebar-user">
+    <div class="user-avatar" id="userAvatar">--</div>
+    <div class="user-info">
+      <div class="name" id="userName">Loading...</div>
+      <div class="role" id="userRole">—</div>
+    </div>
+    <button class="btn-logout" id="logoutBtn" aria-label="Sign out"><i class="ti ti-logout" aria-hidden="true"></i></button>
+  </div>
+</aside>
+
+<!-- ── Main ── -->
+<div class="main">
+
+  <header class="topbar">
+    <h1>Orders</h1>
+    <div class="topbar-right">
+      <button class="btn-outline" id="newQuoteBtn">
+        <i class="ti ti-file-description" aria-hidden="true"></i> New quote
+      </button>
+      <button class="btn-primary" id="newOrderBtn">
+        <i class="ti ti-plus" aria-hidden="true"></i> New order
+      </button>
+    </div>
+  </header>
+
+  <main class="page-body">
+
+    <!-- Filter bar -->
+    <div class="filter-bar">
+      <div class="search-wrap">
+        <i class="ti ti-search" aria-hidden="true"></i>
+        <input type="text" id="searchInput" placeholder="Search by order number or customer…"/>
+      </div>
+      <select class="filter-select" id="statusFilter">
+        <option value="">All statuses</option>
+        <option value="PENDING">Pending</option>
+        <option value="CONFIRMED">Confirmed</option>
+        <option value="DISPATCHED">Dispatched</option>
+        <option value="COMPLETE">Complete</option>
+        <option value="CANCELLED">Cancelled</option>
+      </select>
+      <select class="filter-select" id="typeFilter">
+        <option value="">Orders &amp; quotes</option>
+        <option value="false">Orders only</option>
+        <option value="true">Quotes only</option>
+      </select>
+    </div>
+
+    <!-- Orders table -->
+    <div class="table-card">
+      <div class="table-head">
+        <h2>All orders</h2>
+        <span class="table-count" id="tableCount">Loading…</span>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="orders-table">
+          <thead>
+            <tr>
+              <th>Order #</th>
+              <th>Customer</th>
+              <th>Items</th>
+              <th>Total</th>
+              <th>Status</th>
+              <th>Type</th>
+              <th>Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="ordersTbody">
+            <tr><td colspan="8" class="empty-state"><i class="ti ti-loader" aria-hidden="true"></i><p>Loading orders…</p></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination" id="pagination"></div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ── New Order Modal ── -->
+<div class="modal-overlay" id="orderModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modalTitle">New order</h2>
+      <button class="modal-close" id="modalClose" aria-label="Close"><i class="ti ti-x" aria-hidden="true"></i></button>
+    </div>
+
+    <div class="modal-body">
+
+      <!-- Customer + notes -->
+      <div class="form-row">
+        <div class="field">
+          <label for="customerSelect">Customer</label>
+          <select id="customerSelect">
+            <option value="">Walk-in (no customer)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="orderNotes">Notes</label>
+          <input type="text" id="orderNotes" placeholder="Optional notes…"/>
+        </div>
+      </div>
+
+      <!-- Quote toggle -->
+      <div class="toggle-row">
+        <input type="checkbox" id="isQuote" style="width:16px;height:16px;cursor:pointer;accent-color:var(--brand)"/>
+        <label for="isQuote">Save as quote (won't deduct stock)</label>
+      </div>
+
+      <!-- Product search -->
+      <div class="items-label">Add products</div>
+      <div class="product-search-wrap">
+        <i class="ti ti-search" aria-hidden="true"></i>
+        <input type="text" id="productSearch" placeholder="Search by name, SKU or barcode…" autocomplete="off"/>
+        <div class="product-dropdown" id="productDropdown"></div>
+      </div>
+
+      <!-- Line items -->
+      <div class="items-section">
+        <div class="items-label">Order items</div>
+        <table class="items-table" id="itemsTable">
+          <thead>
+            <tr>
+              <th style="width:35%">Product</th>
+              <th style="width:12%">Qty</th>
+              <th style="width:20%">Unit price</th>
+              <th style="width:15%">Line total</th>
+              <th style="width:8%"></th>
+            </tr>
+          </thead>
+          <tbody id="itemsTbody">
+            <tr><td colspan="5" class="empty-items">No items added yet — search for a product above</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Order total -->
+      <div class="order-total-bar">
+        <div class="total-item">
+          <span class="lbl">Items</span>
+          <span class="val items-val" id="totalItems">0</span>
+        </div>
+        <div class="total-item">
+          <span class="lbl">Order total</span>
+          <span class="val" id="orderTotal">KES 0</span>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-outline" id="cancelModalBtn">Cancel</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn-outline" id="saveQuoteBtn" style="display:none">
+          <i class="ti ti-file-description" aria-hidden="true"></i> Save quote
+        </button>
+        <button class="btn-primary" id="submitOrderBtn">
+          <i class="ti ti-check" aria-hidden="true"></i> Place order
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── Toast ── -->
+<div class="toast" id="toast" role="alert" aria-live="polite">
+  <i class="ti ti-check" id="toastIcon" aria-hidden="true"></i>
+  <span id="toastMsg"></span>
+</div>
+
+<script>
+// ── Auth ─────────────────────────────────────────────────────
+const token = localStorage.getItem('token');
+const user  = JSON.parse(localStorage.getItem('user') || 'null');
+if (!token || !user) window.location.href = 'login.html';
+
+if (user) {
+  const initials = user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0,2);
+  document.getElementById('userAvatar').textContent = initials;
+  document.getElementById('userName').textContent   = user.name;
+  document.getElementById('userRole').textContent   = user.role;
+}
+
+document.getElementById('sidebarLogo').onerror = () => {
+  document.getElementById('sidebarLogo').style.display = 'none';
+  document.getElementById('logoFallback').style.display = 'flex';
+};
+
+document.getElementById('logoutBtn').addEventListener('click', () => {
+  localStorage.clear();
+  window.location.href = 'login.html';
+});
+
+// ── Helpers ──────────────────────────────────────────────────
+const api = (path, opts = {}) =>
+  fetch('/api' + path, {
+    ...opts,
+    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', ...(opts.headers || {}) }
+  }).then(r => r.json());
+
+function fmtKES(n) {
+  return 'KES ' + Number(n || 0).toLocaleString('en-KE', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+
+function fmtDate(d) {
+  return new Date(d).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function pillClass(s) {
+  return { PENDING:'pending', CONFIRMED:'confirmed', DISPATCHED:'dispatched', COMPLETE:'complete', CANCELLED:'cancelled' }[s] || 'pending';
+}
+
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  const icon = document.getElementById('toastIcon');
+  document.getElementById('toastMsg').textContent = msg;
+  t.className = 'toast show ' + type;
+  icon.className = type === 'success' ? 'ti ti-check' : 'ti ti-alert-circle';
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ── Orders list ──────────────────────────────────────────────
+let allOrders  = [];
+let page       = 1;
+const pageSize = 15;
+
+async function loadOrders() {
+  const tbody = document.getElementById('ordersTbody');
+  tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><p>Loading…</p></td></tr>';
+
+  const res = await api('/orders');
+  if (!res.success) { showToast('Failed to load orders', 'error'); return; }
+  allOrders = res.data;
+  page = 1;
+  renderTable();
+}
+
+function filteredOrders() {
+  const search = document.getElementById('searchInput').value.toLowerCase().trim();
+  const status = document.getElementById('statusFilter').value;
+  const type   = document.getElementById('typeFilter').value;
+
+  return allOrders.filter(o => {
+    const matchSearch = !search ||
+      o.order_number.toLowerCase().includes(search) ||
+      (o.customer_name || '').toLowerCase().includes(search);
+    const matchStatus = !status || o.status === status;
+    const matchType   = type === '' ? true : type === 'true' ? o.is_quote : !o.is_quote;
+    return matchSearch && matchStatus && matchType;
+  });
+}
+
+function renderTable() {
+  const filtered = filteredOrders();
+  const start    = (page - 1) * pageSize;
+  const paged    = filtered.slice(start, start + pageSize);
+  const tbody    = document.getElementById('ordersTbody');
+
+  document.getElementById('tableCount').textContent = filtered.length + ' order' + (filtered.length !== 1 ? 's' : '');
+
+  if (!paged.length) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state">
+      <i class="ti ti-shopping-cart" aria-hidden="true"></i>
+      <p>No orders found</p></div></td></tr>`;
+    document.getElementById('pagination').innerHTML = '';
+    return;
+  }
+
+  tbody.innerHTML = paged.map(o => `
+    <tr onclick="window.location.href='order-detail.html?id=${o.id}'">
+      <td style="font-weight:500">${o.order_number}</td>
+      <td>${o.customer_name || '<span style="color:var(--brand-mid)">Walk-in</span>'}</td>
+      <td style="color:var(--brand-mid)">${o.item_count ?? '—'}</td>
+      <td style="font-weight:500">${o.order_total ? fmtKES(o.order_total) : '—'}</td>
+      <td><span class="status-pill ${pillClass(o.status)}">${o.status.charAt(0) + o.status.slice(1).toLowerCase()}</span></td>
+      <td>${o.is_quote ? '<span class="quote-badge">Quote</span>' : '<span style="color:var(--brand-mid);font-size:0.8rem">Order</span>'}</td>
+      <td style="color:var(--brand-mid)">${fmtDate(o.created_at)}</td>
+      <td onclick="event.stopPropagation()">
+        <button class="btn-outline" style="padding:4px 10px;font-size:0.75rem" onclick="viewOrder(${o.id})">
+          <i class="ti ti-eye" aria-hidden="true"></i> View
+        </button>
+      </td>
+    </tr>`).join('');
+
+  renderPagination(filtered.length);
+}
+
+function renderPagination(total) {
+  const pages = Math.ceil(total / pageSize);
+  if (pages <= 1) { document.getElementById('pagination').innerHTML = ''; return; }
+  let html = `<button class="page-btn" onclick="goPage(${page-1})" ${page===1?'disabled':''}>‹</button>`;
+  for (let i = 1; i <= pages; i++) {
+    html += `<button class="page-btn ${i===page?'active':''}" onclick="goPage(${i})">${i}</button>`;
+  }
+  html += `<button class="page-btn" onclick="goPage(${page+1})" ${page===pages?'disabled':''}>›</button>`;
+  document.getElementById('pagination').innerHTML = html;
+}
+
+function goPage(p) { page = p; renderTable(); }
+function viewOrder(id) { window.location.href = 'order-detail.html?id=' + id; }
+
+// Filters
+document.getElementById('searchInput').addEventListener('input',  () => { page = 1; renderTable(); });
+document.getElementById('statusFilter').addEventListener('change', () => { page = 1; renderTable(); });
+document.getElementById('typeFilter').addEventListener('change',   () => { page = 1; renderTable(); });
+
+// ── Customers dropdown ───────────────────────────────────────
+async function loadCustomers() {
+  const res = await api('/customers');
+  if (!res.success) return;
+  const sel = document.getElementById('customerSelect');
+  res.data.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.id;
+    opt.textContent = c.name + (c.type !== 'WALK_IN' ? ' (' + c.type + ')' : '');
+    sel.appendChild(opt);
+  });
+}
+
+// ── Order modal ──────────────────────────────────────────────
+let orderItems = [];     // array of { product, qty, price }
+let isQuoteMode = false;
+
+function openModal(quote = false) {
+  isQuoteMode = quote;
+  orderItems  = [];
+  document.getElementById('orderModal').classList.add('open');
+  document.getElementById('modalTitle').textContent = quote ? 'New quote' : 'New order';
+  document.getElementById('submitOrderBtn').innerHTML = quote
+    ? '<i class="ti ti-file-description" aria-hidden="true"></i> Save quote'
+    : '<i class="ti ti-check" aria-hidden="true"></i> Place order';
+  document.getElementById('isQuote').checked = quote;
+  document.getElementById('productSearch').value = '';
+  document.getElementById('orderNotes').value    = '';
+  document.getElementById('customerSelect').value = '';
+  renderItems();
+}
+
+function closeModal() {
+  document.getElementById('orderModal').classList.remove('open');
+  document.getElementById('productDropdown').classList.remove('open');
+}
+
+document.getElementById('newOrderBtn').addEventListener('click', () => openModal(false));
+document.getElementById('newQuoteBtn').addEventListener('click', () => openModal(true));
+document.getElementById('modalClose').addEventListener('click',  closeModal);
+document.getElementById('cancelModalBtn').addEventListener('click', closeModal);
+document.getElementById('orderModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('orderModal')) closeModal();
+});
+
+document.getElementById('isQuote').addEventListener('change', e => {
+  isQuoteMode = e.target.checked;
+  document.getElementById('modalTitle').textContent = isQuoteMode ? 'New quote' : 'New order';
+  document.getElementById('submitOrderBtn').innerHTML = isQuoteMode
+    ? '<i class="ti ti-file-description" aria-hidden="true"></i> Save quote'
+    : '<i class="ti ti-check" aria-hidden="true"></i> Place order';
+});
+
+// ── Product search ───────────────────────────────────────────
+let searchTimer = null;
+let allProducts = [];
+
+async function preloadProducts() {
+  const res = await api('/products');
+  if (res.success) allProducts = res.data;
+}
+
+document.getElementById('productSearch').addEventListener('input', e => {
+  clearTimeout(searchTimer);
+  const q = e.target.value.trim().toLowerCase();
+  if (!q) { document.getElementById('productDropdown').classList.remove('open'); return; }
+  searchTimer = setTimeout(() => showProductDropdown(q), 180);
+});
+
+document.getElementById('productSearch').addEventListener('blur', () => {
+  setTimeout(() => document.getElementById('productDropdown').classList.remove('open'), 180);
+});
+
+function showProductDropdown(q) {
+  const results = allProducts.filter(p =>
+    p.name.toLowerCase().includes(q) ||
+    (p.sku  || '').toLowerCase().includes(q) ||
+    (p.barcode || '').toLowerCase().includes(q)
+  ).slice(0, 10);
+
+  const dd = document.getElementById('productDropdown');
+  if (!results.length) {
+    dd.innerHTML = '<div class="pd-item"><span class="pd-name" style="color:var(--brand-mid)">No products found</span></div>';
+  } else {
+    dd.innerHTML = results.map(p => `
+      <div class="pd-item" onmousedown="addProduct(${p.id})">
+        <div>
+          <div class="pd-name">${p.name}</div>
+          <div class="pd-sku">${p.sku || ''} · ${p.unit_of_measure}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="pd-price">${fmtKES(p.min_selling_price)}</div>
+          <div class="pd-stock ${p.current_stock <= 0 ? 'pd-nostock' : ''}">${p.current_stock} in stock</div>
+        </div>
+      </div>`).join('');
+  }
+  dd.classList.add('open');
+}
+
+function addProduct(productId) {
+  const product = allProducts.find(p => p.id === productId);
+  if (!product) return;
+
+  // If already in list just increment qty
+  const existing = orderItems.find(i => i.product.id === productId);
+  if (existing) {
+    existing.qty++;
+  } else {
+    orderItems.push({ product, qty: 1, price: parseFloat(product.min_selling_price) });
+  }
+
+  document.getElementById('productSearch').value = '';
+  document.getElementById('productDropdown').classList.remove('open');
+  renderItems();
+}
+
+// ── Line items render ────────────────────────────────────────
+function renderItems() {
+  const tbody = document.getElementById('itemsTbody');
+
+  if (!orderItems.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="empty-items">No items added yet — search for a product above</td></tr>';
+    document.getElementById('totalItems').textContent = '0';
+    document.getElementById('orderTotal').textContent = 'KES 0';
+    return;
+  }
+
+  tbody.innerHTML = orderItems.map((item, idx) => {
+    const lineTotal  = item.qty * item.price;
+    const minPrice   = parseFloat(item.product.min_selling_price);
+    const priceError = item.price < minPrice;
+    return `
+      <tr>
+        <td>
+          <div style="font-size:0.84rem;font-weight:500">${item.product.name}</div>
+          <div style="font-size:0.72rem;color:var(--brand-mid)">${item.product.sku || ''} · ${item.product.unit_of_measure}</div>
+        </td>
+        <td>
+          <input type="number" min="1" value="${item.qty}"
+            onchange="updateQty(${idx}, this.value)"
+            oninput="updateQty(${idx}, this.value)"/>
+        </td>
+        <td>
+          <div class="price-input-wrap">
+            <span>KES</span>
+            <input type="number" min="${minPrice}" step="0.01"
+              value="${item.price}"
+              class="${priceError ? 'price-error' : ''}"
+              onchange="updatePrice(${idx}, this.value)"
+              oninput="updatePrice(${idx}, this.value)"/>
+          </div>
+          <div class="price-hint ${priceError ? 'error' : ''}">
+            Min: ${fmtKES(minPrice)}${priceError ? ' — below minimum!' : ''}
+          </div>
+        </td>
+        <td><span class="line-total">${fmtKES(lineTotal)}</span></td>
+        <td>
+          <button class="btn-remove" onclick="removeItem(${idx})" aria-label="Remove item">
+            <i class="ti ti-trash" aria-hidden="true"></i>
+          </button>
+        </td>
+      </tr>`;
+  }).join('');
+
+  const totalQty = orderItems.reduce((s, i) => s + i.qty, 0);
+  const totalAmt = orderItems.reduce((s, i) => s + i.qty * i.price, 0);
+  document.getElementById('totalItems').textContent  = totalQty + ' item' + (totalQty !== 1 ? 's' : '');
+  document.getElementById('orderTotal').textContent  = fmtKES(totalAmt);
+}
+
+function updateQty(idx, val) {
+  const qty = parseInt(val);
+  if (qty > 0) { orderItems[idx].qty = qty; renderItems(); }
+}
+
+function updatePrice(idx, val) {
+  orderItems[idx].price = parseFloat(val) || 0;
+  renderItems();
+}
+
+function removeItem(idx) {
+  orderItems.splice(idx, 1);
+  renderItems();
+}
+
+// ── Submit order ─────────────────────────────────────────────
+document.getElementById('submitOrderBtn').addEventListener('click', submitOrder);
+
+async function submitOrder() {
+  if (!orderItems.length) { showToast('Add at least one product', 'error'); return; }
+
+  // Check all prices are above minimum
+  const priceViolation = orderItems.find(i => i.price < parseFloat(i.product.min_selling_price));
+  if (priceViolation) {
+    showToast('One or more prices are below the minimum allowed', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('submitOrderBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="ti ti-loader" aria-hidden="true"></i> Saving…';
+
+  const payload = {
+    customer_id: document.getElementById('customerSelect').value || null,
+    is_quote:    document.getElementById('isQuote').checked,
+    notes:       document.getElementById('orderNotes').value.trim() || null,
+    items: orderItems.map(i => ({
+      product_id:    i.product.id,
+      quantity:      i.qty,
+      selling_price: i.price,
+    })),
+  };
+
+  const res = await api('/orders', { method: 'POST', body: JSON.stringify(payload) });
+
+  btn.disabled = false;
+  btn.innerHTML = isQuoteMode
+    ? '<i class="ti ti-file-description" aria-hidden="true"></i> Save quote'
+    : '<i class="ti ti-check" aria-hidden="true"></i> Place order';
+
+  if (!res.success) { showToast(res.message || 'Failed to save order', 'error'); return; }
+
+  showToast(isQuoteMode ? 'Quote saved successfully' : 'Order placed successfully');
+  closeModal();
+  loadOrders();
+}
+
+// ── Check for ?new=1 from dashboard ─────────────────────────
+if (new URLSearchParams(window.location.search).get('new') === '1') {
+  openModal(false);
+}
+
+// ── Boot ─────────────────────────────────────────────────────
+loadOrders();
+loadCustomers();
+preloadProducts();
+</script>
+</body>
+</html>

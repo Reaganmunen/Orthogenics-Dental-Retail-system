@@ -1,6 +1,6 @@
 const InvoiceModel   = require('../models/invoiceModel');
 const OrderItemModel = require('../models/orderItemModel');
-const PaymentModel   = require('../models/paymentModel');
+const {PaymentModel}   = require('../models/paymentModel');
 
 const InvoiceController = {
 

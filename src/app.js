@@ -1,32 +1,34 @@
 require('dotenv').config();
 
-const express = require('express');
-const path    = require('path');
+const express      = require('express');
+const path         = require('path');
+const mainRoutes   = require('./routes/mainRoutes');
+const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
 
-// ─── Middleware ───────────────────────────────────────────────
+// ─── Core middleware ──────────────────────────────────────────
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // ─── Static files (HTML pages, JS, CSS) ──────────────────────
 app.use(express.static(path.join(__dirname, '..', 'public')));
+// ─── Disable caching for all API responses ───────────────────
+app.use('/api', (req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
 
-// ─── API Routes (will be added as we build each module) ───────
-// app.use('/api', require('./routes'));
 
-// ─── Catch-all: serve login page for unknown routes ───────────
-app.get('*', (req, res) => {
+// ─── All API routes live under /api ──────────────────────────
+app.use('/api', mainRoutes);
+
+// ─── Catch-all: serve login page for any non-API route ───────
+app.get('*splat', (req, res) => {
+  if (req.path.startsWith('/api')) {
+    return res.status(404).json({ success: false, message: 'Route not found' });
+  }
   res.sendFile(path.join(__dirname, '..', 'public', 'pages', 'login.html'));
 });
 
-// ─── Global error handler ────────────────────────────────────
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(err.status || 500).json({
-    success: false,
-    message: err.message || 'Internal server error',
-  });
-});
+// ─── Global error handler (must be last) ─────────────────────
+app.use(errorHandler);
 
 module.exports = app;

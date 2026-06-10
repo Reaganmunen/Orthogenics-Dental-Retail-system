@@ -6,11 +6,12 @@ const OrderController = {
   // GET /api/orders?status=&customer_id=&is_quote=
   async getAll(req, res, next) {
     try {
-      const { status, customer_id, is_quote } = req.query;
+      const { status, customer_id, is_quote, limit } = req.query;
       const orders = await OrderModel.findAll({
         status,
         customer_id,
         is_quote: is_quote !== undefined ? is_quote === 'true' : undefined,
+        limit:    limit ? parseInt(limit) : undefined,
       });
       res.json({ success: true, data: orders });
     } catch (err) {

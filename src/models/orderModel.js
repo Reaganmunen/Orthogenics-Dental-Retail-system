@@ -3,14 +3,16 @@ const pool      = require('../config/db');
 
 const OrderModel = {
 
-  async findAll({ status, customer_id, is_quote } = {}) {
+  async findAll({ status, customer_id, is_quote, limit } = {}) {
     let sql = `
       SELECT o.*,
              c.name AS customer_name,
-             u.name AS created_by_name
+             u.name AS created_by_name,
+             COALESCE(SUM(oi.line_total), 0) AS order_total
       FROM   orders o
-      LEFT JOIN customers c ON c.id = o.customer_id
-      JOIN  users u ON u.id = o.created_by
+      LEFT JOIN customers   c  ON c.id  = o.customer_id
+      JOIN     users        u  ON u.id  = o.created_by
+      LEFT JOIN order_items oi ON oi.order_id = o.id
       WHERE 1=1
     `;
     const params = [];
@@ -28,7 +30,14 @@ const OrderModel = {
       sql += ` AND o.is_quote = $${params.length}`;
     }
 
+    sql += ` GROUP BY o.id, c.name, u.name`;
     sql += ` ORDER BY o.created_at DESC`;
+
+    if (limit) {
+      params.push(parseInt(limit));
+      sql += ` LIMIT $${params.length}`;
+    }
+
     const { rows } = await query(sql, params);
     return rows;
   },

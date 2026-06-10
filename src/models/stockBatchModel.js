@@ -1,6 +1,6 @@
 const { query } = require('./db');
 const pool      = require('../config/db');
-const ProductModel = require('./product.model');
+const ProductModel = require('./productModel');
 
 const StockBatchModel = {
 

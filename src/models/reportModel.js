@@ -6,15 +6,15 @@ const ReportModel = {
   async salesByProduct({ from, to }) {
     const { rows } = await query(
       `SELECT p.id, p.name, p.sku,
-              SUM(oi.quantity)              AS units_sold,
-              SUM(oi.line_total)            AS revenue,
+              SUM(oi.quantity)                   AS units_sold,
+              SUM(oi.line_total)                 AS revenue,
               SUM(oi.buying_price * oi.quantity) AS cost,
               SUM(oi.line_total) - SUM(oi.buying_price * oi.quantity) AS profit
        FROM   order_items oi
        JOIN   products p ON p.id = oi.product_id
        JOIN   orders   o ON o.id = oi.order_id
        WHERE  o.status NOT IN ('CANCELLED')
-         AND  o.created_at::DATE BETWEEN $1 AND $2
+         AND  (o.created_at AT TIME ZONE 'Africa/Nairobi')::DATE BETWEEN $1 AND $2
        GROUP  BY p.id, p.name, p.sku
        ORDER  BY revenue DESC`,
       [from, to]
@@ -25,15 +25,15 @@ const ReportModel = {
   // Daily revenue totals within a date range
   async revenueByDay({ from, to }) {
     const { rows } = await query(
-      `SELECT o.created_at::DATE AS sale_date,
-              COUNT(DISTINCT o.id)           AS order_count,
-              SUM(oi.line_total)             AS revenue,
+      `SELECT (o.created_at AT TIME ZONE 'Africa/Nairobi')::DATE AS sale_date,
+              COUNT(DISTINCT o.id)               AS order_count,
+              SUM(oi.line_total)                 AS revenue,
               SUM(oi.buying_price * oi.quantity) AS cost,
               SUM(oi.line_total) - SUM(oi.buying_price * oi.quantity) AS profit
        FROM   orders o
        JOIN   order_items oi ON oi.order_id = o.id
        WHERE  o.status NOT IN ('CANCELLED')
-         AND  o.created_at::DATE BETWEEN $1 AND $2
+         AND  (o.created_at AT TIME ZONE 'Africa/Nairobi')::DATE BETWEEN $1 AND $2
        GROUP  BY sale_date
        ORDER  BY sale_date ASC`,
       [from, to]
@@ -67,9 +67,9 @@ const ReportModel = {
   async outstandingByCustomer() {
     const { rows } = await query(
       `SELECT c.id, c.name, c.phone,
-              COUNT(i.id)          AS invoice_count,
-              SUM(i.balance_due)   AS total_outstanding,
-              MIN(i.due_date)      AS oldest_due_date
+              COUNT(i.id)        AS invoice_count,
+              SUM(i.balance_due) AS total_outstanding,
+              MIN(i.due_date)    AS oldest_due_date
        FROM   invoices i
        JOIN   orders o ON o.id = i.order_id
        JOIN   customers c ON c.id = o.customer_id

@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Orthogenics — Sign in</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" />
+  <style>
+    :root {
+      --brand-dark:   #1a1a1a;
+      --brand-mid:    #6b6b6b;
+      --brand-light:  #f5f5f3;
+      --brand-accent: #2c2c2a;
+      --input-radius: 6px;
+      --card-radius:  12px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      background-color: var(--brand-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      color: var(--brand-dark);
+    }
+
+    /* ── Split layout ── */
+    .login-wrap {
+      display: flex;
+      width: 100%;
+      max-width: 900px;
+      min-height: 540px;
+      background: #fff;
+      border-radius: var(--card-radius);
+      box-shadow: 0 2px 24px rgba(0,0,0,0.08);
+      overflow: hidden;
+    }
+
+    /* ── Left panel — brand ── */
+    .brand-panel {
+      width: 42%;
+      background-color: var(--brand-dark);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 2rem;
+      gap: 2rem;
+      position: relative;
+    }
+
+    .brand-panel::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #444 0%, #888 50%, #444 100%);
+    }
+
+    /* Logo placeholder — swap the <img> src when ready */
+    .logo-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .logo-img {
+      width: 180px;
+      height: auto;
+      max-width: 100%;
+      object-fit: contain;
+     
+     
+    }
+
+    /* Fallback hexagon shown when no image is set */
+    .logo-fallback {
+      display: none;
+      width: 90px;
+      height: 90px;
+    }
+
+    .logo-img[src=""], .logo-img:not([src]) {
+      display: none;
+    }
+    .logo-img[src=""] ~ .logo-fallback,
+    .logo-img:not([src]) ~ .logo-fallback {
+      display: block;
+    }
+
+    .brand-name {
+      text-align: center;
+      line-height: 1;
+    }
+
+    .brand-name .ortho {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      color: #fff;
+      display: block;
+    }
+
+    .brand-name .genics {
+      font-size: 2rem;
+      font-weight: 300;
+      letter-spacing: 0.06em;
+      color: #999;
+      display: block;
+    }
+
+    .brand-tagline {
+      font-size: 0.7rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #666;
+      border-top: 1px solid #333;
+      padding-top: 0.75rem;
+      width: 100%;
+      text-align: center;
+    }
+
+    /* ── Right panel — form ── */
+    .form-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 3rem 2.5rem;
+    }
+
+    .form-heading {
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: var(--brand-dark);
+      margin-bottom: 0.4rem;
+    }
+
+    .form-sub {
+      font-size: 0.875rem;
+      color: var(--brand-mid);
+      margin-bottom: 2rem;
+    }
+
+    /* Input group */
+    .field-group {
+      margin-bottom: 1.25rem;
+    }
+
+    .field-group label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      color: var(--brand-mid);
+      margin-bottom: 0.4rem;
+      text-transform: uppercase;
+    }
+
+    .input-wrap {
+      position: relative;
+    }
+
+    .input-wrap i {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 16px;
+      color: #bbb;
+      pointer-events: none;
+    }
+
+    .input-wrap input {
+      width: 100%;
+      height: 44px;
+      padding: 0 12px 0 38px;
+      border: 1px solid #e0e0e0;
+      border-radius: var(--input-radius);
+      font-size: 0.9rem;
+      color: var(--brand-dark);
+      background: #fafafa;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      outline: none;
+    }
+
+    .input-wrap input:focus {
+      border-color: var(--brand-accent);
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(44,44,42,0.08);
+    }
+
+    /* Toggle password visibility */
+    .toggle-pw {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #bbb;
+      font-size: 16px;
+      padding: 0;
+      line-height: 1;
+    }
+
+    .toggle-pw:hover { color: var(--brand-mid); }
+
+    /* Error alert */
+    .alert-error {
+      display: none;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: var(--input-radius);
+      padding: 0.65rem 0.9rem;
+      font-size: 0.85rem;
+      color: #b91c1c;
+      margin-bottom: 1.25rem;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .alert-error.show { display: flex; }
+
+    /* Submit button */
+    .btn-signin {
+      width: 100%;
+      height: 46px;
+      background: var(--brand-dark);
+      color: #fff;
+      border: none;
+      border-radius: var(--input-radius);
+      font-size: 0.9rem;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background 0.15s, transform 0.1s;
+      margin-top: 0.5rem;
+    }
+
+    .btn-signin:hover  { background: #333; }
+    .btn-signin:active { transform: scale(0.99); }
+    .btn-signin:disabled { background: #999; cursor: not-allowed; }
+
+    /* Spinner */
+    .spinner {
+      display: none;
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .btn-signin.loading .spinner       { display: block; }
+    .btn-signin.loading .btn-text      { display: none; }
+
+    /* Footer note */
+    .form-footer {
+      margin-top: 2rem;
+      font-size: 0.75rem;
+      color: #bbb;
+      text-align: center;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      .brand-panel { display: none; }
+      .login-wrap  { max-width: 420px; border-radius: var(--card-radius); }
+      .form-panel  { padding: 2.5rem 1.75rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="login-wrap">
+
+  <!-- Left: brand panel -->
+  <div class="brand-panel">
+    <div class="logo-area">
+
+      <!--
+        TO ADD YOUR LOGO:
+        Replace the src below with the path to the logo file.
+        Example: src="../assets/orthogenics-logo.png"
+        The filter: brightness(0) invert(1) makes it white — remove that
+        line in the CSS if your logo is already white or has colour.
+      -->
+      <img
+        class="logo-img"
+        src="../assets/logo.png"
+        alt="Orthogenics logo"
+      />
+
+      <!-- Fallback shown only when no logo image is set -->
+      <svg class="logo-fallback" viewBox="0 0 90 90" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <polygon points="45,4 83,25 83,65 45,86 7,65 7,25" fill="#2c2c2a" stroke="#555" stroke-width="1.5"/>
+        <polygon points="45,14 74,30 74,60 45,76 16,60 16,30" fill="none" stroke="#444" stroke-width="1"/>
+        <circle cx="45" cy="45" r="14" fill="none" stroke="#888" stroke-width="2"/>
+        <circle cx="45" cy="45" r="5" fill="#888"/>
+      </svg>
+
+      <div class="brand-name">
+        <span class="ortho">ORTHO</span>
+        <span class="genics">GENICS</span>
+      </div>
+      <p class="brand-tagline">Dental Supply Co.</p>
+    </div>
+  </div>
+
+  <!-- Right: form panel -->
+  <div class="form-panel">
+    <h1 class="form-heading">Welcome back</h1>
+    <p class="form-sub">Sign in to your account to continue</p>
+
+    <div class="alert-error" id="errorAlert" role="alert">
+      <i class="ti ti-alert-circle" aria-hidden="true"></i>
+      <span id="errorMsg">Invalid email or password</span>
+    </div>
+
+    <form id="loginForm" novalidate>
+
+      <div class="field-group">
+        <label for="email">Email address</label>
+        <div class="input-wrap">
+          <i class="ti ti-mail" aria-hidden="true"></i>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            placeholder="you@orthogenics.co.ke"
+            autocomplete="email"
+            required
+          />
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label for="password">Password</label>
+        <div class="input-wrap">
+          <i class="ti ti-lock" aria-hidden="true"></i>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            placeholder="••••••••"
+            autocomplete="current-password"
+            required
+          />
+          <button type="button" class="toggle-pw" id="togglePw" aria-label="Show password">
+            <i class="ti ti-eye" id="eyeIcon" aria-hidden="true"></i>
+          </button>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-signin" id="signinBtn">
+        <span class="spinner"></span>
+        <span class="btn-text">Sign in</span>
+      </button>
+
+    </form>
+
+    <p class="form-footer">Orthogenics Dental Supply Co. &copy; 2026</p>
+  </div>
+
+</div>
+
+<script>
+  const form      = document.getElementById('loginForm');
+  const btn       = document.getElementById('signinBtn');
+  const errorBox  = document.getElementById('errorAlert');
+  const errorMsg  = document.getElementById('errorMsg');
+  const togglePw  = document.getElementById('togglePw');
+  const pwInput   = document.getElementById('password');
+  const eyeIcon   = document.getElementById('eyeIcon');
+
+  // Toggle password visibility
+  togglePw.addEventListener('click', () => {
+    const show = pwInput.type === 'password';
+    pwInput.type = show ? 'text' : 'password';
+    eyeIcon.className = show ? 'ti ti-eye-off' : 'ti ti-eye';
+    togglePw.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+  });
+
+  function showError(msg) {
+    errorMsg.textContent = msg;
+    errorBox.classList.add('show');
+  }
+
+  function hideError() {
+    errorBox.classList.remove('show');
+  }
+
+  function setLoading(on) {
+    btn.disabled = on;
+    btn.classList.toggle('loading', on);
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideError();
+
+    const email    = document.getElementById('email').value.trim();
+    const password = pwInput.value;
+
+    if (!email || !password) {
+      showError('Please enter your email and password');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const res  = await fetch('/api/auth/login', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        showError(data.message || 'Invalid email or password');
+        return;
+      }
+
+      // Store token and user info
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+
+      // Redirect to dashboard
+      window.location.href = '/pages/dashboard.html';
+
+    } catch (err) {
+      showError('Could not connect to the server. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  });
+</script>
+
+</body>
+</html>

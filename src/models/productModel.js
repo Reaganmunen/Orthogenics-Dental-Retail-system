@@ -127,6 +127,7 @@ const ProductModel = {
     return rows;
   },
 
+
 };
 
 module.exports = ProductModel;
