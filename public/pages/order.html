@@ -139,13 +139,18 @@
     .items-table th { font-size: 0.7rem; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; color: var(--brand-mid); padding: 0.55rem 0.9rem; text-align: left; background: var(--bg-page); border-bottom: 1px solid var(--border); }
     .items-table td { padding: 0.6rem 0.9rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
     .items-table tr:last-child td { border-bottom: none; }
-    .items-table input[type="number"] { width: 70px; padding: 5px 8px; border: 1px solid var(--border); border-radius: 5px; font-size: 0.84rem; color: var(--brand); background: #fafafa; outline: none; text-align: center; }
-    .items-table input[type="number"]:focus { border-color: var(--brand); background: #fff; }
-    .price-input-wrap { position: relative; }
-    .price-input-wrap span { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); font-size: 0.78rem; color: var(--brand-mid); }
-.price-input-wrap input { width: 120px; padding: 5px 8px 5px 30px; border: 1px solid var(--border); border-radius: 5px; font-size: 0.84rem; color: var(--brand); background: #fafafa; outline: none; -moz-appearance: textfield;appearance: textfield; }
-.price-input-wrap input::-webkit-outer-spin-button,
-.price-input-wrap input::-webkit-inner-spin-button { -webkit-appearance: none;appearance: none; margin: 0; }
+    /* qty input — narrow, centred */
+    .qty-input { width: 70px; padding: 5px 8px; border: 1px solid var(--border); border-radius: 5px; font-size: 0.84rem; color: var(--brand); background: #fafafa; outline: none; text-align: center; -moz-appearance: textfield; appearance: textfield; }
+    .qty-input::-webkit-outer-spin-button,
+    .qty-input::-webkit-inner-spin-button { -webkit-appearance: none; appearance: none; margin: 0; }
+    .qty-input:focus { border-color: var(--brand); background: #fff; }
+
+    /* price input — wider, with KES prefix room */
+    .price-input-wrap { position: relative; display: inline-flex; align-items: center; }
+    .price-input-wrap span { position: absolute; left: 9px; font-size: 0.75rem; font-weight: 500; color: var(--brand-mid); pointer-events: none; white-space: nowrap; }
+    .price-input-wrap input { width: 150px; padding: 5px 8px 5px 44px; border: 1px solid var(--border); border-radius: 5px; font-size: 0.84rem; color: var(--brand); background: #fafafa; outline: none; -moz-appearance: textfield; appearance: textfield; }
+    .price-input-wrap input::-webkit-outer-spin-button,
+    .price-input-wrap input::-webkit-inner-spin-button { -webkit-appearance: none; appearance: none; margin: 0; }
     .price-input-wrap input:focus { border-color: var(--brand); background: #fff; }
     .price-input-wrap input.price-error { border-color: var(--red-600); background: var(--red-50); }
     .line-total { font-size: 0.84rem; font-weight: 500; color: var(--brand); }
@@ -650,7 +655,7 @@ function renderItems() {
           <div style="font-size:0.72rem;color:var(--brand-mid)">${item.product.sku || ''} · ${item.product.unit_of_measure}</div>
         </td>
         <td>
-          <input type="number" min="1" value="${item.qty}"
+          <input type="number" class="qty-input" min="1" value="${item.qty}"
             onchange="updateQty(${idx}, this.value)"
             oninput="updateQty(${idx}, this.value)"/>
         </td>

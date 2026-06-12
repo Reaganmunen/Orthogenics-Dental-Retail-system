@@ -3,7 +3,7 @@ const pool      = require('../config/db');
 
 const OrderModel = {
 
-  async findAll({ status, customer_id, is_quote, limit } = {}) {
+  async findAll({ status, customer_id, is_quote, limit, product_id } = {}) {
     let sql = `
       SELECT o.*,
              c.name AS customer_name,
@@ -28,6 +28,13 @@ const OrderModel = {
     if (is_quote !== undefined) {
       params.push(is_quote);
       sql += ` AND o.is_quote = $${params.length}`;
+    }
+    if (product_id) {
+      params.push(product_id);
+      sql += ` AND EXISTS (
+        SELECT 1 FROM order_items oi2
+        WHERE oi2.order_id = o.id AND oi2.product_id = $${params.length}
+      )`;
     }
 
     sql += ` GROUP BY o.id, c.name, u.name`;

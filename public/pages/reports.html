@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Reports — Orthogenics</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --sidebar-w: 240px;
+      --brand:     #1a1a1a;
+      --brand-mid: #6b6b6b;
+      --bg-page:   #f5f5f3;
+      --bg-card:   #ffffff;
+      --border:    #e8e8e5;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+
+      --teal-50:  #E1F5EE;
+      --teal-600: #0F6E56;
+      --teal-800: #085041;
+
+      --amber-50:  #FAEEDA;
+      --amber-600: #854F0B;
+      --amber-800: #633806;
+
+      --red-50:  #FCEBEB;
+      --red-600: #A32D2D;
+
+      --blue-50:  #E6F1FB;
+      --blue-600: #185FA5;
+      --blue-800: #0C447C;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg-page);
+      color: var(--brand);
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--brand);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      z-index: 100;
+    }
+
+    .sidebar-logo {
+      padding: 1.5rem 1.25rem 1rem;
+      border-bottom: 1px solid #2a2a2a;
+    }
+
+    .sidebar-logo .logo-img {
+      width: 140px;
+      height: auto;
+      max-width: 100%;
+      object-fit: contain;
+      filter: brightness(0) invert(1);
+      mix-blend-mode: screen;
+    }
+
+    .logo-text {
+      display: flex;
+      flex-direction: column;
+      line-height: 1;
+    }
+
+    .logo-text .top    { font-size: 1.25rem; font-weight: 700; letter-spacing: 0.08em; color: #fff; }
+    .logo-text .bottom { font-size: 1.25rem; font-weight: 300; letter-spacing: 0.08em; color: #777; }
+    .logo-text .sub    { font-size: 0.6rem;  letter-spacing: 0.16em; color: #555; text-transform: uppercase; margin-top: 4px; }
+
+    .sidebar-nav {
+      flex: 1;
+      padding: 1rem 0;
+      overflow-y: auto;
+    }
+
+    .nav-section {
+      font-size: 0.62rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #444;
+      padding: 0.75rem 1.25rem 0.4rem;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0.55rem 1.25rem;
+      font-size: 0.85rem;
+      color: #999;
+      text-decoration: none;
+      border-radius: 0;
+      transition: color 0.15s, background 0.15s;
+      border-left: 3px solid transparent;
+    }
+
+    .nav-link i { font-size: 17px; }
+    .nav-link:hover  { color: #fff; background: rgba(255,255,255,0.04); }
+    .nav-link.active { color: #fff; border-left-color: #fff; background: rgba(255,255,255,0.06); }
+
+    .sidebar-user {
+      padding: 1rem 1.25rem;
+      border-top: 1px solid #2a2a2a;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .user-avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: #333;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 500; color: #aaa;
+      flex-shrink: 0;
+    }
+
+    .user-info .name  { font-size: 0.8rem; font-weight: 500; color: #ddd; }
+    .user-info .role  { font-size: 0.7rem; color: #666; }
+
+    .btn-logout {
+      margin-left: auto;
+      background: none; border: none;
+      color: #555; font-size: 16px;
+      cursor: pointer; padding: 4px;
+      transition: color 0.15s;
+    }
+    .btn-logout:hover { color: #aaa; }
+
+    /* ── Main ── */
+    .main {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* ── Topbar ── */
+    .topbar {
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .topbar-left h1 {
+      font-size: 1.05rem;
+      font-weight: 500;
+      color: var(--brand);
+    }
+
+    .topbar-left .date {
+      font-size: 0.78rem;
+      color: var(--brand-mid);
+    }
+
+    .topbar-right { display: flex; align-items: center; gap: 12px; }
+
+    .topbar-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 6px 14px;
+      font-size: 0.82rem;
+      color: var(--brand);
+      cursor: pointer;
+      display: flex; align-items: center; gap: 6px;
+      transition: background 0.15s;
+    }
+    .topbar-btn:hover { background: var(--bg-page); }
+    .topbar-btn i { font-size: 15px; }
+
+    /* ── Page body ── */
+    .page-body {
+      padding: 2rem;
+      flex: 1;
+    }
+
+    /* ── Report tabs ── */
+    .report-tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 1.5rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 6px;
+      width: fit-content;
+    }
+
+    .tab-btn {
+      background: none;
+      border: none;
+      padding: 7px 18px;
+      font-size: 0.83rem;
+      color: var(--brand-mid);
+      cursor: pointer;
+      border-radius: 6px;
+      transition: background 0.15s, color 0.15s;
+      display: flex; align-items: center; gap: 6px;
+      white-space: nowrap;
+    }
+    .tab-btn i { font-size: 15px; }
+    .tab-btn:hover { color: var(--brand); background: var(--bg-page); }
+    .tab-btn.active { background: var(--brand); color: #fff; }
+
+    /* ── Date range bar ── */
+    .filter-bar {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-bar label {
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--brand-mid);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .filter-bar input[type="date"],
+    .filter-bar select {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 6px 10px;
+      font-size: 0.83rem;
+      color: var(--brand);
+      background: var(--bg-page);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .filter-bar input[type="date"]:focus,
+    .filter-bar select:focus { border-color: var(--brand); }
+
+    .filter-bar .run-btn {
+      background: var(--brand);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-md);
+      padding: 7px 18px;
+      font-size: 0.83rem;
+      cursor: pointer;
+      display: flex; align-items: center; gap: 6px;
+      transition: opacity 0.15s;
+    }
+    .filter-bar .run-btn:hover { opacity: 0.85; }
+    .filter-bar .run-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .filter-bar .filter-sep {
+      height: 24px;
+      width: 1px;
+      background: var(--border);
+    }
+
+    /* ── Stat cards ── */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0,1fr));
+      gap: 14px;
+      margin-bottom: 1.75rem;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem 1.25rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .stat-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      color: var(--brand-mid);
+      text-transform: uppercase;
+    }
+
+    .stat-icon {
+      width: 34px; height: 34px;
+      border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 17px;
+    }
+    .stat-icon.teal   { background: var(--teal-50);  color: var(--teal-600); }
+    .stat-icon.amber  { background: var(--amber-50); color: var(--amber-600); }
+    .stat-icon.red    { background: var(--red-50);   color: var(--red-600); }
+    .stat-icon.blue   { background: var(--blue-50);  color: var(--blue-600); }
+
+    .stat-value {
+      font-size: 1.65rem;
+      font-weight: 600;
+      color: var(--brand);
+      line-height: 1;
+    }
+
+    .stat-sub {
+      font-size: 0.75rem;
+      color: var(--brand-mid);
+    }
+
+    /* ── Section cards ── */
+    .section-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      margin-bottom: 1.5rem;
+    }
+
+    .section-head {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .section-head h2 {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--brand);
+    }
+
+    .section-head .head-right {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 0.78rem;
+      color: var(--brand-mid);
+    }
+
+    /* ── Chart ── */
+    .chart-wrap {
+      padding: 1.25rem;
+      height: 260px;
+      position: relative;
+    }
+
+    /* ── Data tables ── */
+    .data-table { width: 100%; border-collapse: collapse; }
+
+    .data-table th {
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--brand-mid);
+      padding: 0.65rem 1.25rem;
+      text-align: left;
+      background: var(--bg-page);
+      border-bottom: 1px solid var(--border);
+    }
+    .data-table th.num { text-align: right; }
+
+    .data-table td {
+      padding: 0.8rem 1.25rem;
+      font-size: 0.84rem;
+      color: var(--brand);
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    .data-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tbody tr:hover { background: var(--bg-page); }
+
+    /* profit column */
+    .profit-pos { color: var(--teal-600); font-weight: 500; }
+    .profit-neg { color: var(--red-600);  font-weight: 500; }
+
+    /* ── Progress bar (sales by product) ── */
+    .mini-bar-wrap { display: flex; align-items: center; gap: 8px; }
+    .mini-bar {
+      flex: 1; height: 4px;
+      background: var(--bg-page);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .mini-bar-fill {
+      height: 100%;
+      background: var(--brand);
+      border-radius: 2px;
+    }
+
+    /* ── Dead stock badge ── */
+    .dead-badge {
+      display: inline-block;
+      font-size: 0.68rem;
+      font-weight: 500;
+      padding: 2px 8px;
+      border-radius: 20px;
+      background: var(--amber-50);
+      color: var(--amber-600);
+    }
+
+    /* ── Outstanding ── */
+    .outstanding-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0.85rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.12s;
+    }
+    .outstanding-item:last-child { border-bottom: none; }
+    .outstanding-item:hover { background: var(--bg-page); }
+
+    .cust-avatar {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      background: var(--blue-50);
+      color: var(--blue-600);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.72rem;
+      font-weight: 600;
+      flex-shrink: 0;
+      text-transform: uppercase;
+    }
+
+    .cust-info { flex: 1; min-width: 0; }
+    .cust-info .cust-name  { font-size: 0.84rem; font-weight: 500; color: var(--brand); }
+    .cust-info .cust-phone { font-size: 0.75rem; color: var(--brand-mid); }
+
+    .cust-balance { text-align: right; }
+    .cust-balance .bal-amt  { font-size: 0.85rem; font-weight: 600; color: var(--red-600); }
+    .cust-balance .bal-inv  { font-size: 0.72rem; color: var(--brand-mid); }
+    .cust-balance .bal-due  { font-size: 0.72rem; color: var(--amber-600); }
+
+    /* ── Empty / loading states ── */
+    .empty-state {
+      padding: 2.5rem 1.25rem;
+      text-align: center;
+      font-size: 0.84rem;
+      color: var(--brand-mid);
+    }
+
+    .skeleton {
+      background: linear-gradient(90deg, #f0f0ee 25%, #e8e8e6 50%, #f0f0ee 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 4px;
+    }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+    /* ── Report panels (one shown at a time) ── */
+    .report-panel { display: none; }
+    .report-panel.active { display: block; }
+
+    /* ── Responsive ── */
+    @media (max-width: 1100px) {
+      .stat-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    }
+
+    @media (max-width: 768px) {
+      .sidebar      { transform: translateX(-100%); transition: transform 0.2s; }
+      .sidebar.open { transform: translateX(0); }
+      .main         { margin-left: 0; }
+      .stat-grid    { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .report-tabs  { width: 100%; overflow-x: auto; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Sidebar ─────────────────────────────────────── -->
+<aside class="sidebar" id="sidebar">
+
+  <div class="sidebar-logo">
+    <img class="logo-img" src="../assets/logo.png" alt="Orthogenics" id="sidebarLogo"/>
+    <div class="logo-text" id="logoFallback" style="display:none">
+      <span class="top">ORTHO</span>
+      <span class="bottom">GENICS</span>
+      <span class="sub">Dental Supply Co.</span>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav" aria-label="Main navigation">
+    <div class="nav-section">Main</div>
+    <a href="dashboard.html" class="nav-link">
+      <i class="ti ti-layout-dashboard" aria-hidden="true"></i> Dashboard
+    </a>
+    <a href="order.html" class="nav-link">
+      <i class="ti ti-shopping-cart" aria-hidden="true"></i> Orders
+    </a>
+    <a href="invoices.html" class="nav-link">
+      <i class="ti ti-file-invoice" aria-hidden="true"></i> Invoices
+    </a>
+    <a href="payments.html" class="nav-link">
+      <i class="ti ti-credit-card" aria-hidden="true"></i> Payments
+    </a>
+
+    <div class="nav-section">Inventory</div>
+    <a href="products.html" class="nav-link">
+      <i class="ti ti-package" aria-hidden="true"></i> Products
+    </a>
+    <a href="stock.html" class="nav-link">
+      <i class="ti ti-building-warehouse" aria-hidden="true"></i> Stock
+    </a>
+    <a href="suppliers.html" class="nav-link">
+      <i class="ti ti-truck" aria-hidden="true"></i> Suppliers
+    </a>
+
+    <div class="nav-section">People</div>
+    <a href="customers.html" class="nav-link">
+      <i class="ti ti-users" aria-hidden="true"></i> Customers
+    </a>
+
+    <div class="nav-section">Insights</div>
+    <a href="reports.html" class="nav-link active">
+      <i class="ti ti-chart-bar" aria-hidden="true"></i> Reports
+    </a>
+  </nav>
+
+  <div class="sidebar-user">
+    <div class="user-avatar" id="userAvatar">--</div>
+    <div class="user-info">
+      <div class="name" id="userName">Loading...</div>
+      <div class="role" id="userRole">—</div>
+    </div>
+    <button class="btn-logout" id="logoutBtn" title="Sign out" aria-label="Sign out">
+      <i class="ti ti-logout" aria-hidden="true"></i>
+    </button>
+  </div>
+
+</aside>
+
+<!-- ── Main ────────────────────────────────────────── -->
+<div class="main">
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <h1>Reports</h1>
+      <div class="date" id="todayDate"></div>
+    </div>
+    <div class="topbar-right">
+      <button class="topbar-btn" id="exportBtn">
+        <i class="ti ti-download" aria-hidden="true"></i> Export CSV
+      </button>
+    </div>
+  </header>
+
+  <!-- Page body -->
+  <main class="page-body">
+
+    <!-- Report tabs -->
+    <div class="report-tabs" role="tablist">
+      <button class="tab-btn active" data-tab="revenue" role="tab" aria-selected="true">
+        <i class="ti ti-chart-line" aria-hidden="true"></i> Revenue
+      </button>
+      <button class="tab-btn" data-tab="sales" role="tab" aria-selected="false">
+        <i class="ti ti-package" aria-hidden="true"></i> Sales by product
+      </button>
+      <button class="tab-btn" data-tab="deadstock" role="tab" aria-selected="false">
+        <i class="ti ti-alert-circle" aria-hidden="true"></i> Dead stock
+      </button>
+      <button class="tab-btn" data-tab="outstanding" role="tab" aria-selected="false">
+        <i class="ti ti-file-alert" aria-hidden="true"></i> Outstanding
+      </button>
+    </div>
+
+    <!-- ════════════════════════════════════════
+         PANEL 1 — Revenue by day
+    ═════════════════════════════════════════ -->
+    <div class="report-panel active" id="panel-revenue">
+
+      <!-- Date filter -->
+      <div class="filter-bar">
+        <label>From</label>
+        <input type="date" id="rev-from" />
+        <label>To</label>
+        <input type="date" id="rev-to" />
+        <div class="filter-sep"></div>
+        <button class="run-btn" id="rev-run">
+          <i class="ti ti-refresh" aria-hidden="true"></i> Run
+        </button>
+      </div>
+
+      <!-- Summary stats -->
+      <div class="stat-grid" id="rev-stat-grid">
+        <div class="stat-card">
+          <div class="stat-card-top">
+            <span class="stat-label">Total revenue</span>
+            <div class="stat-icon teal"><i class="ti ti-currency-dollar"></i></div>
+          </div>
+          <div class="stat-value" id="rev-total-revenue">KES —</div>
+          <div class="stat-sub" id="rev-total-days">Loading...</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-top">
+            <span class="stat-label">Total cost</span>
+            <div class="stat-icon amber"><i class="ti ti-receipt"></i></div>
+          </div>
+          <div class="stat-value" id="rev-total-cost">KES —</div>
+          <div class="stat-sub" id="rev-avg-day">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-top">
+            <span class="stat-label">Gross profit</span>
+            <div class="stat-icon blue"><i class="ti ti-trending-up"></i></div>
+          </div>
+          <div class="stat-value" id="rev-total-profit">KES —</div>
+          <div class="stat-sub" id="rev-margin">— margin</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-top">
+            <span class="stat-label">Orders</span>
+            <div class="stat-icon teal"><i class="ti ti-shopping-cart"></i></div>
+          </div>
+          <div class="stat-value" id="rev-total-orders">—</div>
+          <div class="stat-sub" id="rev-avg-order">— avg order value</div>
+        </div>
+      </div>
+
+      <!-- Revenue chart -->
+      <div class="section-card">
+        <div class="section-head">
+          <h2>Daily revenue</h2>
+          <div class="head-right" id="rev-date-label">—</div>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="revenueChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Revenue table -->
+      <div class="section-card">
+        <div class="section-head">
+          <h2>Day-by-day breakdown</h2>
+          <div class="head-right" id="rev-row-count">— days</div>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th class="num">Orders</th>
+                <th class="num">Revenue</th>
+                <th class="num">Cost</th>
+                <th class="num">Profit</th>
+                <th class="num">Margin</th>
+              </tr>
+            </thead>
+            <tbody id="rev-tbody">
+              <tr><td colspan="6" class="empty-state">Run a report to see data.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /panel-revenue -->
+
+
+    <!-- ════════════════════════════════════════
+         PANEL 2 — Sales by product
+    ═════════════════════════════════════════ -->
+    <div class="report-panel" id="panel-sales">
+
+      <div class="filter-bar">
+        <label>From</label>
+        <input type="date" id="sales-from" />
+        <label>To</label>
+        <input type="date" id="sales-to" />
+        <div class="filter-sep"></div>
+        <button class="run-btn" id="sales-run">
+          <i class="ti ti-refresh" aria-hidden="true"></i> Run
+        </button>
+      </div>
+
+      <!-- Summary stats -->
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-card-top">
+            <span class="stat-label">Products sold</span>
+            <div class="stat-icon blue"><i class="ti ti-package"></i></div>
+          </div>
+          <div class="stat-value" id="sales-products">—</div>
+          <div class="stat-sub">Distinct products with sales</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-top">
+            <span class="stat-label">Units sold</span>
+            <div class="stat-icon teal"><i class="ti ti-barcode"></i></div>
+          </div>
+          <div class="stat-value" id="sales-units">—</div>
+          <div class="stat-sub">Total quantity across all products</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-top">
+            <span class="stat-label">Revenue</span>
+            <div class="stat-icon teal"><i class="ti ti-currency-dollar"></i></div>
+          </div>
+          <div class="stat-value" id="sales-revenue">KES —</div>
+          <div class="stat-sub" id="sales-period-label">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-top">
+            <span class="stat-label">Gross profit</span>
+            <div class="stat-icon blue"><i class="ti ti-trending-up"></i></div>
+          </div>
+          <div class="stat-value" id="sales-profit">KES —</div>
+          <div class="stat-sub" id="sales-margin">— margin</div>
+        </div>
+      </div>
+
+      <!-- Top products chart -->
+      <div class="section-card">
+        <div class="section-head">
+          <h2>Top 10 products by revenue</h2>
+        </div>
+        <div class="chart-wrap" style="height:300px">
+          <canvas id="salesChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Full product table -->
+      <div class="section-card">
+        <div class="section-head">
+          <h2>All products</h2>
+          <div class="head-right" id="sales-row-count">—</div>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>SKU</th>
+                <th class="num">Units sold</th>
+                <th class="num">Revenue</th>
+                <th class="num">Cost</th>
+                <th class="num">Profit</th>
+                <th style="width:140px">Share</th>
+              </tr>
+            </thead>
+            <tbody id="sales-tbody">
+              <tr><td colspan="7" class="empty-state">Run a report to see data.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /panel-sales -->
+
+
+    <!-- ════════════════════════════════════════
+         PANEL 3 — Dead stock
+    ═════════════════════════════════════════ -->
+    <div class="report-panel" id="panel-deadstock">
+
+      <div class="filter-bar">
+        <label>No sales in the last</label>
+        <select id="dead-days">
+          <option value="30">30 days</option>
+          <option value="60">60 days</option>
+          <option value="90" selected>90 days</option>
+          <option value="180">180 days</option>
+          <option value="365">1 year</option>
+        </select>
+        <div class="filter-sep"></div>
+        <button class="run-btn" id="dead-run">
+          <i class="ti ti-refresh" aria-hidden="true"></i> Run
+        </button>
+      </div>
+
+      <!-- Summary stats -->
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-card-top">
+            <span class="stat-label">Dead stock items</span>
+            <div class="stat-icon red"><i class="ti ti-alert-circle"></i></div>
+          </div>
+          <div class="stat-value" id="dead-count">—</div>
+          <div class="stat-sub">Products with zero sales</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-top">
+            <span class="stat-label">Capital tied up</span>
+            <div class="stat-icon amber"><i class="ti ti-lock"></i></div>
+          </div>
+          <div class="stat-value" id="dead-value">KES —</div>
+          <div class="stat-sub">Total stock value (buying price)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-top">
+            <span class="stat-label">Avg stock value</span>
+            <div class="stat-icon blue"><i class="ti ti-calculator"></i></div>
+          </div>
+          <div class="stat-value" id="dead-avg">KES —</div>
+          <div class="stat-sub">Per dead-stock item</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-top">
+            <span class="stat-label">Largest item</span>
+            <div class="stat-icon red"><i class="ti ti-arrow-up"></i></div>
+          </div>
+          <div class="stat-value" id="dead-top-val">KES —</div>
+          <div class="stat-sub" id="dead-top-name">—</div>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-head">
+          <h2>Dead stock items</h2>
+          <div class="head-right" id="dead-row-count">— items</div>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>SKU</th>
+                <th class="num">In stock</th>
+                <th>Unit</th>
+                <th class="num">Buy price</th>
+                <th class="num">Stock value</th>
+              </tr>
+            </thead>
+            <tbody id="dead-tbody">
+              <tr><td colspan="6" class="empty-state">Run a report to see data.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /panel-deadstock -->
+
+
+    <!-- ════════════════════════════════════════
+         PANEL 4 — Outstanding invoices
+    ═════════════════════════════════════════ -->
+    <div class="report-panel" id="panel-outstanding">
+
+      <!-- Outstanding loads automatically — no filter needed -->
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-card-top">
+            <span class="stat-label">Customers owing</span>
+            <div class="stat-icon red"><i class="ti ti-users"></i></div>
+          </div>
+          <div class="stat-value" id="out-customers">—</div>
+          <div class="stat-sub">With unpaid / overdue invoices</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-top">
+            <span class="stat-label">Total outstanding</span>
+            <div class="stat-icon red"><i class="ti ti-currency-dollar"></i></div>
+          </div>
+          <div class="stat-value" id="out-total">KES —</div>
+          <div class="stat-sub">Across all open invoices</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-top">
+            <span class="stat-label">Total invoices</span>
+            <div class="stat-icon amber"><i class="ti ti-file-invoice"></i></div>
+          </div>
+          <div class="stat-value" id="out-invoices">—</div>
+          <div class="stat-sub">Unpaid, partial or overdue</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-top">
+            <span class="stat-label">Largest debt</span>
+            <div class="stat-icon red"><i class="ti ti-arrow-up"></i></div>
+          </div>
+          <div class="stat-value" id="out-top-val">KES —</div>
+          <div class="stat-sub" id="out-top-name">—</div>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-head">
+          <h2>Outstanding by customer</h2>
+          <div class="head-right" id="out-row-count">— customers</div>
+        </div>
+        <div id="out-list">
+          <div class="empty-state">Loading...</div>
+        </div>
+      </div>
+
+    </div><!-- /panel-outstanding -->
+
+  </main>
+</div><!-- /.main -->
+
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script>
+
+// ── Auth guard ────────────────────────────────────────────────────
+const token = localStorage.getItem('token');
+const user  = JSON.parse(localStorage.getItem('user') || 'null');
+if (!token || !user) window.location.href = 'login.html';
+
+// ── Populate user info ────────────────────────────────────────────
+if (user) {
+  const initials = user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0,2);
+  document.getElementById('userAvatar').textContent = initials;
+  document.getElementById('userName').textContent   = user.name;
+  document.getElementById('userRole').textContent   = user.role;
+}
+
+// ── Logo fallback ─────────────────────────────────────────────────
+const logoImg = document.getElementById('sidebarLogo');
+logoImg.onerror = () => {
+  logoImg.style.display = 'none';
+  document.getElementById('logoFallback').style.display = 'flex';
+};
+
+// ── Today's date ──────────────────────────────────────────────────
+document.getElementById('todayDate').textContent = new Date().toLocaleDateString('en-KE', {
+  weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+});
+
+// ── Logout ────────────────────────────────────────────────────────
+document.getElementById('logoutBtn').addEventListener('click', () => {
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  window.location.href = 'login.html';
+});
+
+// ── Helpers ───────────────────────────────────────────────────────
+async function apiFetch(path) {
+  const res = await fetch('/api' + path, {
+    headers: { 'Authorization': 'Bearer ' + token }
+  });
+  if (res.status === 401) { window.location.href = 'login.html'; return null; }
+  const data = await res.json();
+  return data.success ? data : null;         // return full envelope so we have from/to/days
+}
+
+function fmtKES(n) {
+  return 'KES ' + Number(n || 0).toLocaleString('en-KE', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+
+function fmtDate(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function localDateStr(d) {
+  return d.getFullYear() + '-' +
+    String(d.getMonth() + 1).padStart(2,'0') + '-' +
+    String(d.getDate()).padStart(2,'0');
+}
+
+// Default range: current month
+function defaultFrom() {
+  const d = new Date(); d.setDate(1);
+  return localDateStr(d);
+}
+function defaultTo() {
+  const d = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0);
+  return localDateStr(d);
+}
+
+// Set default dates for date-range panels
+['rev-from','rev-to','sales-from','sales-to'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.value = id.endsWith('-from') ? defaultFrom() : defaultTo();
+});
+
+// ── Tab switching ─────────────────────────────────────────────────
+let activeTab = 'revenue';
+const panels   = {};
+document.querySelectorAll('.report-panel').forEach(p => {
+  panels[p.id.replace('panel-','')] = p;
+});
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const tab = btn.dataset.tab;
+    if (tab === activeTab) return;
+
+    document.querySelectorAll('.tab-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.tab === tab);
+      b.setAttribute('aria-selected', b.dataset.tab === tab);
+    });
+    Object.entries(panels).forEach(([key, el]) => {
+      el.classList.toggle('active', key === tab);
+    });
+
+    activeTab = tab;
+
+    // Auto-load outstanding when first switched to
+    if (tab === 'outstanding' && !outstandingLoaded) loadOutstanding();
+  });
+});
+
+// ── Chart instances (kept so we can destroy & recreate) ───────────
+let revChart  = null;
+let salesChart = null;
+
+// ══════════════════════════════════════════════════════════════════
+// REVENUE REPORT
+// ══════════════════════════════════════════════════════════════════
+document.getElementById('rev-run').addEventListener('click', loadRevenue);
+
+async function loadRevenue() {
+  const from = document.getElementById('rev-from').value;
+  const to   = document.getElementById('rev-to').value;
+  if (!from || !to) return;
+
+  const btn = document.getElementById('rev-run');
+  btn.disabled = true; btn.textContent = 'Loading…';
+
+  const env = await apiFetch(`/reports/revenue?from=${from}&to=${to}`);
+  btn.disabled = false; btn.innerHTML = '<i class="ti ti-refresh"></i> Run';
+
+  if (!env) return;
+  const rows = env.data;
+
+  // Summary stats
+  const totRev    = rows.reduce((s,r) => s + parseFloat(r.revenue||0), 0);
+  const totCost   = rows.reduce((s,r) => s + parseFloat(r.cost||0), 0);
+  const totProfit = totRev - totCost;
+  const totOrders = rows.reduce((s,r) => s + parseInt(r.order_count||0), 0);
+  const margin    = totRev > 0 ? ((totProfit/totRev)*100).toFixed(1) : '0.0';
+  const avgOrder  = totOrders > 0 ? (totRev/totOrders) : 0;
+
+  document.getElementById('rev-total-revenue').textContent = fmtKES(totRev);
+  document.getElementById('rev-total-cost').textContent    = fmtKES(totCost);
+  document.getElementById('rev-total-profit').textContent  = fmtKES(totProfit);
+  document.getElementById('rev-total-orders').textContent  = totOrders;
+  document.getElementById('rev-total-days').textContent    = rows.length + ' trading days';
+  document.getElementById('rev-avg-day').textContent       = fmtKES(rows.length ? totRev/rows.length : 0) + ' avg / day';
+  document.getElementById('rev-margin').textContent        = margin + '% gross margin';
+  document.getElementById('rev-avg-order').textContent     = fmtKES(avgOrder) + ' avg order';
+  document.getElementById('rev-date-label').textContent    = fmtDate(from) + ' – ' + fmtDate(to);
+  document.getElementById('rev-row-count').textContent     = rows.length + ' days';
+
+  // Chart
+  const labels  = rows.map(r => new Date(r.sale_date).toLocaleDateString('en-KE', { day:'numeric', month:'short' }));
+  const revData = rows.map(r => parseFloat(r.revenue||0));
+  const profData= rows.map(r => parseFloat(r.profit||0));
+
+  if (revChart) revChart.destroy();
+  const ctx = document.getElementById('revenueChart').getContext('2d');
+  revChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Revenue',
+          data: revData,
+          backgroundColor: '#1a1a1a',
+          borderRadius: 4,
+          borderSkipped: false,
+        },
+        {
+          label: 'Profit',
+          data: profData,
+          backgroundColor: '#0F6E56',
+          borderRadius: 4,
+          borderSkipped: false,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, position: 'top', labels: { font: { size: 11 }, color: '#6b6b6b', boxWidth: 12 }},
+        tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + fmtKES(ctx.raw) }}
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 11 }, color: '#999' }},
+        y: { grid: { color: '#f0f0ee' }, ticks: {
+          font: { size: 11 }, color: '#999',
+          callback: v => 'KES ' + (v >= 1000 ? Math.round(v/1000) + 'k' : v)
+        }}
+      }
+    }
+  });
+
+  // Table
+  const tbody = document.getElementById('rev-tbody');
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No data for this period.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.map(r => {
+    const rev  = parseFloat(r.revenue||0);
+    const cost = parseFloat(r.cost||0);
+    const prof = rev - cost;
+    const mgn  = rev > 0 ? ((prof/rev)*100).toFixed(1) : '0.0';
+    const cls  = prof >= 0 ? 'profit-pos' : 'profit-neg';
+    return `
+      <tr>
+        <td>${fmtDate(r.sale_date)}</td>
+        <td class="num">${r.order_count}</td>
+        <td class="num">${fmtKES(rev)}</td>
+        <td class="num">${fmtKES(cost)}</td>
+        <td class="num ${cls}">${fmtKES(prof)}</td>
+        <td class="num">${mgn}%</td>
+      </tr>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// SALES BY PRODUCT
+// ══════════════════════════════════════════════════════════════════
+document.getElementById('sales-run').addEventListener('click', loadSales);
+
+async function loadSales() {
+  const from = document.getElementById('sales-from').value;
+  const to   = document.getElementById('sales-to').value;
+  if (!from || !to) return;
+
+  const btn = document.getElementById('sales-run');
+  btn.disabled = true; btn.textContent = 'Loading…';
+
+  const env = await apiFetch(`/reports/sales?from=${from}&to=${to}`);
+  btn.disabled = false; btn.innerHTML = '<i class="ti ti-refresh"></i> Run';
+
+  if (!env) return;
+  const rows = env.data;
+
+  // Summary
+  const totRev    = rows.reduce((s,r) => s + parseFloat(r.revenue||0), 0);
+  const totCost   = rows.reduce((s,r) => s + parseFloat(r.cost||0), 0);
+  const totProfit = totRev - totCost;
+  const totUnits  = rows.reduce((s,r) => s + parseInt(r.units_sold||0), 0);
+  const margin    = totRev > 0 ? ((totProfit/totRev)*100).toFixed(1) : '0.0';
+
+  document.getElementById('sales-products').textContent     = rows.length;
+  document.getElementById('sales-units').textContent        = totUnits.toLocaleString('en-KE');
+  document.getElementById('sales-revenue').textContent      = fmtKES(totRev);
+  document.getElementById('sales-profit').textContent       = fmtKES(totProfit);
+  document.getElementById('sales-margin').textContent       = margin + '% gross margin';
+  document.getElementById('sales-period-label').textContent = fmtDate(from) + ' – ' + fmtDate(to);
+  document.getElementById('sales-row-count').textContent    = rows.length + ' products';
+
+  // Chart — top 10
+  const top10  = rows.slice(0, 10);
+  const labels = top10.map(r => r.name.length > 22 ? r.name.slice(0,22)+'…' : r.name);
+  const revs   = top10.map(r => parseFloat(r.revenue||0));
+  const profs  = top10.map(r => parseFloat(r.profit||0));
+
+  if (salesChart) salesChart.destroy();
+  const ctx2 = document.getElementById('salesChart').getContext('2d');
+  salesChart = new Chart(ctx2, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Revenue', data: revs,  backgroundColor: '#1a1a1a', borderRadius: 4, borderSkipped: false },
+        { label: 'Profit',  data: profs, backgroundColor: '#0F6E56', borderRadius: 4, borderSkipped: false }
+      ]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, position: 'top', labels: { font: { size: 11 }, color: '#6b6b6b', boxWidth: 12 }},
+        tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + fmtKES(ctx.raw) }}
+      },
+      scales: {
+        x: { grid: { color: '#f0f0ee' }, ticks: { font:{size:11}, color:'#999', callback: v => 'KES '+(v>=1000?Math.round(v/1000)+'k':v) }},
+        y: { grid: { display: false }, ticks: { font:{size:11}, color:'#6b6b6b' }}
+      }
+    }
+  });
+
+  // Table
+  const tbody = document.getElementById('sales-tbody');
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No data for this period.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.map(r => {
+    const rev  = parseFloat(r.revenue||0);
+    const prof = parseFloat(r.profit||0);
+    const pct  = totRev > 0 ? (rev/totRev*100) : 0;
+    const cls  = prof >= 0 ? 'profit-pos' : 'profit-neg';
+    return `
+      <tr>
+        <td>${r.name}</td>
+        <td style="color:var(--brand-mid);font-size:0.78rem">${r.sku || '—'}</td>
+        <td class="num">${parseInt(r.units_sold||0).toLocaleString('en-KE')}</td>
+        <td class="num">${fmtKES(rev)}</td>
+        <td class="num">${fmtKES(r.cost||0)}</td>
+        <td class="num ${cls}">${fmtKES(prof)}</td>
+        <td>
+          <div class="mini-bar-wrap">
+            <div class="mini-bar"><div class="mini-bar-fill" style="width:${pct.toFixed(1)}%"></div></div>
+            <span style="font-size:0.72rem;color:var(--brand-mid);width:36px;text-align:right">${pct.toFixed(1)}%</span>
+          </div>
+        </td>
+      </tr>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// DEAD STOCK
+// ══════════════════════════════════════════════════════════════════
+document.getElementById('dead-run').addEventListener('click', loadDeadStock);
+
+async function loadDeadStock() {
+  const days = document.getElementById('dead-days').value;
+  const btn  = document.getElementById('dead-run');
+  btn.disabled = true; btn.textContent = 'Loading…';
+
+  const env = await apiFetch(`/reports/dead-stock?days=${days}`);
+  btn.disabled = false; btn.innerHTML = '<i class="ti ti-refresh"></i> Run';
+
+  if (!env) return;
+  const rows = env.data;
+
+  const totValue = rows.reduce((s,r) => s + parseFloat(r.stock_value||0), 0);
+  const avgValue = rows.length ? totValue / rows.length : 0;
+  const top      = rows[0];
+
+  document.getElementById('dead-count').textContent    = rows.length;
+  document.getElementById('dead-value').textContent    = fmtKES(totValue);
+  document.getElementById('dead-avg').textContent      = fmtKES(avgValue);
+  document.getElementById('dead-top-val').textContent  = top ? fmtKES(top.stock_value) : 'KES —';
+  document.getElementById('dead-top-name').textContent = top ? top.name : '—';
+  document.getElementById('dead-row-count').textContent = rows.length + ' items';
+
+  const tbody = document.getElementById('dead-tbody');
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="6" class="empty-state">No dead stock in the last ${days} days. Great work!</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = rows.map(r => `
+    <tr>
+      <td>
+        <div style="font-weight:500">${r.name}</div>
+      </td>
+      <td style="color:var(--brand-mid);font-size:0.78rem">${r.sku || '—'}</td>
+      <td class="num">${parseFloat(r.current_stock||0).toLocaleString('en-KE')}</td>
+      <td style="color:var(--brand-mid)">${r.unit_of_measure || '—'}</td>
+      <td class="num">${fmtKES(r.buying_price)}</td>
+      <td class="num" style="font-weight:500;color:var(--amber-600)">${fmtKES(r.stock_value)}</td>
+    </tr>`).join('');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// OUTSTANDING
+// ══════════════════════════════════════════════════════════════════
+let outstandingLoaded = false;
+
+async function loadOutstanding() {
+  const env = await apiFetch('/reports/outstanding');
+  outstandingLoaded = true;
+  if (!env) return;
+  const rows = env.data;
+
+  const totOut     = rows.reduce((s,r) => s + parseFloat(r.total_outstanding||0), 0);
+  const totInv     = rows.reduce((s,r) => s + parseInt(r.invoice_count||0), 0);
+  const top        = rows[0];
+
+  document.getElementById('out-customers').textContent = rows.length;
+  document.getElementById('out-total').textContent     = fmtKES(totOut);
+  document.getElementById('out-invoices').textContent  = totInv;
+  document.getElementById('out-top-val').textContent   = top ? fmtKES(top.total_outstanding) : 'KES —';
+  document.getElementById('out-top-name').textContent  = top ? top.name : '—';
+  document.getElementById('out-row-count').textContent = rows.length + ' customers';
+
+  const list = document.getElementById('out-list');
+  if (!rows.length) {
+    list.innerHTML = '<div class="empty-state">No outstanding invoices. All customers are paid up!</div>';
+    return;
+  }
+
+  list.innerHTML = rows.map(r => {
+    const initials = r.name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
+    const oldestDue = r.oldest_due_date ? fmtDate(r.oldest_due_date) : '—';
+    const isOverdue = r.oldest_due_date && new Date(r.oldest_due_date) < new Date();
+    return `
+      <div class="outstanding-item" style="cursor:pointer" onclick="window.location.href='customers.html?id=${r.id}'">
+        <div class="cust-avatar">${initials}</div>
+        <div class="cust-info">
+          <div class="cust-name">${r.name}</div>
+          <div class="cust-phone">${r.phone || '—'} · ${r.invoice_count} invoice${r.invoice_count != 1 ? 's' : ''}</div>
+        </div>
+        <div class="cust-balance">
+          <div class="bal-amt">${fmtKES(r.total_outstanding)}</div>
+          <div class="${isOverdue ? 'bal-due' : 'bal-inv'}">Oldest due: ${oldestDue}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ── CSV export ────────────────────────────────────────────────────
+document.getElementById('exportBtn').addEventListener('click', () => {
+  const tables = document.querySelectorAll(`#panel-${activeTab} .data-table`);
+  const lists  = document.querySelectorAll(`#panel-${activeTab} .outstanding-item`);
+
+  // For outstanding (no table), fallback to inner text collection
+  if (activeTab === 'outstanding') {
+    exportOutstandingCSV();
+    return;
+  }
+
+  // Use first data-table found in active panel
+  const table = tables[tables.length - 1]; // prefer full table over summary
+  if (!table) { alert('Run a report first.'); return; }
+  exportTableCSV(table, activeTab);
+});
+
+function exportTableCSV(table, name) {
+  const rows = [];
+  table.querySelectorAll('tr').forEach(tr => {
+    const cells = [...tr.querySelectorAll('th,td')].map(c => '"' + c.innerText.replace(/"/g,'""') + '"');
+    if (cells.length) rows.push(cells.join(','));
+  });
+  if (rows.length <= 1) { alert('No data to export.'); return; }
+  downloadCSV(rows.join('\n'), `orthogenics-${name}-${localDateStr(new Date())}.csv`);
+}
+
+function exportOutstandingCSV() {
+  const rows = ['"Customer","Phone","Invoices","Total Outstanding","Oldest Due"'];
+  document.querySelectorAll('#out-list .outstanding-item').forEach(item => {
+    const name = item.querySelector('.cust-name')?.innerText || '';
+    const phone = (item.querySelector('.cust-phone')?.innerText || '').split(' · ')[0];
+    const invPart = (item.querySelector('.cust-phone')?.innerText || '').split(' · ')[1] || '';
+    const amt  = item.querySelector('.bal-amt')?.innerText || '';
+    const due  = item.querySelector('.bal-inv, .bal-due')?.innerText?.replace('Oldest due: ','') || '';
+    rows.push(`"${name}","${phone}","${invPart}","${amt}","${due}"`);
+  });
+  if (rows.length <= 1) { alert('No data to export.'); return; }
+  downloadCSV(rows.join('\n'), `orthogenics-outstanding-${localDateStr(new Date())}.csv`);
+}
+
+function downloadCSV(content, filename) {
+  const blob = new Blob([content], { type: 'text/csv' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ── Auto-load revenue on page open ───────────────────────────────
+loadRevenue();
+
+</script>
+</body>
+</html>

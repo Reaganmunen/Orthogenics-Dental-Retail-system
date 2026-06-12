@@ -65,6 +65,7 @@
       height: auto;
       object-fit: contain;
       filter: brightness(0) invert(1);
+     
       mix-blend-mode: screen;
     }
 
@@ -730,18 +731,80 @@
     const reorderNeeded = stock <= p.reorder_point ? 'Yes — reorder recommended' : 'No';
     document.getElementById('reorderNeeded').innerHTML = reorderNeeded;
 
-    // Batches placeholder (you can implement batch endpoint later)
-    const batchesTbody = document.getElementById('batchesTbody');
-    batchesTbody.innerHTML = '<tr><td colspan="4" class="empty-state"><i class="ti ti-database"></i> Batch tracking will appear here once stock is received</td></tr>';
+    // Load stock batches
+    loadBatches();
 
-    // Recent orders placeholder
+    // Load recent orders
     loadRecentOrders();
+  }
+
+  async function loadBatches() {
+    if (!productData) return;
+    const tbody = document.getElementById('batchesTbody');
+    tbody.innerHTML = '<tr><td colspan="4" class="empty-state"><i class="ti ti-loader"></i> Loading batches...</td></tr>';
+
+    try {
+      const res = await apiFetch(`/stock/batches/${productData.id}`);
+      if (!res?.success || !res.data.length) {
+        tbody.innerHTML = '<tr><td colspan="4" class="empty-state"><i class="ti ti-database"></i> No stock received yet</td></tr>';
+        return;
+      }
+      tbody.innerHTML = res.data.map(b => `
+        <tr>
+          <td>${fmtDate(b.received_at)}</td>
+          <td>${b.quantity}</td>
+          <td>${b.expiry_date ? fmtDate(b.expiry_date) : '–'}</td>
+          <td>${b.delivery_note || '–'}</td>
+        </tr>`).join('');
+    } catch (err) {
+      tbody.innerHTML = '<tr><td colspan="4" class="empty-state"><i class="ti ti-alert-circle"></i> Failed to load batches</td></tr>';
+    }
   }
 
   async function loadRecentOrders() {
     if (!productData) return;
     const tbody = document.getElementById('ordersTbody');
-    tbody.innerHTML = '<tr><td colspan="5" class="empty-state"><i class="ti ti-shopping-cart"></i> No sales recorded for this product yet</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" class="empty-state"><i class="ti ti-loader"></i> Loading recent orders...</td></tr>';
+
+    try {
+      // Step 1: fetch the last 10 orders that contain this product
+      const res = await apiFetch(`/orders?product_id=${productData.id}&limit=10`);
+      if (!res?.success || !res.data.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="empty-state"><i class="ti ti-shopping-cart"></i> No sales recorded for this product yet</td></tr>';
+        return;
+      }
+
+      // Step 2: for each order, fetch its line items to get qty/price for THIS product
+      const rows = await Promise.all(res.data.map(async (order) => {
+        const detail = await apiFetch(`/orders/${order.id}`);
+        const item = detail?.data?.items?.find(i => String(i.product_id) === String(productData.id));
+        const qty          = item ? item.quantity : '–';
+        const sellingPrice = item ? fmtKES(item.selling_price) : '–';
+        const lineTotal    = item ? fmtKES(item.line_total) : '–';
+
+        const statusColors = {
+          PENDING:    'background:#FEF3C7;color:#92400E',
+          CONFIRMED:  'background:#DBEAFE;color:#1E40AF',
+          DISPATCHED: 'background:#EDE9FE;color:#5B21B6',
+          COMPLETE:   'background:#D1FAE5;color:#065F46',
+          CANCELLED:  'background:#FEE2E2;color:#991B1B',
+        };
+        const badgeStyle = statusColors[order.status] || 'background:#f0f0f0;color:#333';
+
+        return `
+          <tr>
+            <td><a href="order-detail.html?id=${order.id}" style="color:var(--brand);font-weight:500;text-decoration:none;">${order.order_number}</a></td>
+            <td>${fmtDate(order.created_at)}</td>
+            <td>${qty}</td>
+            <td>${sellingPrice}</td>
+            <td style="font-weight:500;">${lineTotal}</td>
+          </tr>`;
+      }));
+
+      tbody.innerHTML = rows.join('');
+    } catch (err) {
+      tbody.innerHTML = '<tr><td colspan="5" class="empty-state"><i class="ti ti-alert-circle"></i> Failed to load orders</td></tr>';
+    }
   }
 
   // Stock adjustment modal
@@ -772,7 +835,7 @@
     btn.disabled = true;
     btn.innerHTML = '<i class="ti ti-loader"></i> Processing...';
 
-    const res = await apiFetch('/stock-adjustments', {
+    const res = await apiFetch('/stock/adjust', {
       method: 'POST',
       body: JSON.stringify({
         product_id: productData.id,

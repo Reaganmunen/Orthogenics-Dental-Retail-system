@@ -3,15 +3,16 @@ const OrderItemModel = require('../models/orderItemModel');
 
 const OrderController = {
 
-  // GET /api/orders?status=&customer_id=&is_quote=
+  // GET /api/orders?status=&customer_id=&is_quote=&product_id=&limit=
   async getAll(req, res, next) {
     try {
-      const { status, customer_id, is_quote, limit } = req.query;
+      const { status, customer_id, is_quote, limit, product_id } = req.query;
       const orders = await OrderModel.findAll({
         status,
         customer_id,
         is_quote: is_quote !== undefined ? is_quote === 'true' : undefined,
         limit:    limit ? parseInt(limit) : undefined,
+        product_id,
       });
       res.json({ success: true, data: orders });
     } catch (err) {

@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Customers — Orthogenics</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css"/>
+  <style>
+    :root {
+      --sidebar-w: 240px;
+      --brand:     #1a1a1a;
+      --brand-mid: #6b6b6b;
+      --bg-page:   #f5f5f3;
+      --bg-card:   #ffffff;
+      --border:    #e8e8e5;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+
+      --teal-50:  #E1F5EE;
+      --teal-600: #0F6E56;
+      --teal-800: #085041;
+
+      --amber-50:  #FAEEDA;
+      --amber-600: #854F0B;
+      --amber-800: #633806;
+
+      --red-50:  #FCEBEB;
+      --red-600: #A32D2D;
+
+      --blue-50:  #E6F1FB;
+      --blue-600: #185FA5;
+      --blue-800: #0C447C;
+
+      --purple-50:  #F0EAFA;
+      --purple-600: #6B3FA0;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg-page);
+      color: var(--brand);
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--brand);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      z-index: 100;
+    }
+
+    .sidebar-logo {
+      padding: 1.5rem 1.25rem 1rem;
+      border-bottom: 1px solid #2a2a2a;
+    }
+
+    .sidebar-logo .logo-img {
+      width: 140px; height: auto; max-width: 100%; object-fit: contain; filter: brightness(0) invert(1); mix-blend-mode: screen;
+    }
+
+    .logo-text { display: flex; flex-direction: column; line-height: 1; }
+    .logo-text .top    { font-size: 1.25rem; font-weight: 700; letter-spacing: 0.08em; color: #fff; }
+    .logo-text .bottom { font-size: 1.25rem; font-weight: 300; letter-spacing: 0.08em; color: #777; }
+    .logo-text .sub    { font-size: 0.6rem; letter-spacing: 0.16em; color: #555; text-transform: uppercase; margin-top: 4px; }
+
+    .sidebar-nav { flex: 1; padding: 1rem 0; overflow-y: auto; }
+
+    .nav-section {
+      font-size: 0.62rem; font-weight: 500; letter-spacing: 0.12em;
+      text-transform: uppercase; color: #444; padding: 0.75rem 1.25rem 0.4rem;
+    }
+
+    .nav-link {
+      display: flex; align-items: center; gap: 10px;
+      padding: 0.55rem 1.25rem; font-size: 0.85rem; color: #999;
+      text-decoration: none; border-left: 3px solid transparent;
+      transition: color 0.15s, background 0.15s;
+    }
+    .nav-link i { font-size: 17px; }
+    .nav-link:hover  { color: #fff; background: rgba(255,255,255,0.04); }
+    .nav-link.active { color: #fff; border-left-color: #fff; background: rgba(255,255,255,0.06); }
+
+    .sidebar-user {
+      padding: 1rem 1.25rem; border-top: 1px solid #2a2a2a;
+      display: flex; align-items: center; gap: 10px;
+    }
+
+    .user-avatar {
+      width: 32px; height: 32px; border-radius: 50%; background: #333;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 500; color: #aaa; flex-shrink: 0;
+    }
+
+    .user-info .name { font-size: 0.8rem; font-weight: 500; color: #ddd; }
+    .user-info .role { font-size: 0.7rem; color: #666; }
+
+    .btn-logout {
+      margin-left: auto; background: none; border: none;
+      color: #555; font-size: 16px; cursor: pointer; padding: 4px;
+      transition: color 0.15s;
+    }
+    .btn-logout:hover { color: #aaa; }
+
+    /* ── Main ── */
+    .main {
+      margin-left: var(--sidebar-w); flex: 1;
+      display: flex; flex-direction: column; min-height: 100vh;
+    }
+
+    /* ── Topbar ── */
+    .topbar {
+      background: var(--bg-card); border-bottom: 1px solid var(--border);
+      padding: 0 2rem; height: 60px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 50;
+    }
+
+    .topbar-left h1 { font-size: 1.05rem; font-weight: 500; color: var(--brand); }
+    .topbar-left .sub { font-size: 0.78rem; color: var(--brand-mid); }
+    .topbar-right { display: flex; align-items: center; gap: 10px; }
+
+    .topbar-btn {
+      background: none; border: 1px solid var(--border);
+      border-radius: var(--radius-md); padding: 6px 14px;
+      font-size: 0.82rem; color: var(--brand); cursor: pointer;
+      display: flex; align-items: center; gap: 6px; transition: background 0.15s;
+    }
+    .topbar-btn:hover { background: var(--bg-page); }
+    .topbar-btn i { font-size: 15px; }
+
+    .btn-primary-dark {
+      background: var(--brand); border: 1px solid var(--brand);
+      border-radius: var(--radius-md); padding: 6px 14px;
+      font-size: 0.82rem; color: #fff; cursor: pointer;
+      display: flex; align-items: center; gap: 6px; transition: opacity 0.15s;
+    }
+    .btn-primary-dark:hover { opacity: 0.85; }
+    .btn-primary-dark i { font-size: 15px; }
+
+    /* ── Page body ── */
+    .page-body { padding: 2rem; flex: 1; }
+
+    /* ── Stat cards ── */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0,1fr));
+      gap: 14px; margin-bottom: 1.75rem;
+    }
+
+    .stat-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 1.25rem 1.25rem 1rem;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+
+    .stat-card-top { display: flex; align-items: center; justify-content: space-between; }
+
+    .stat-label {
+      font-size: 0.75rem; font-weight: 500; letter-spacing: 0.04em;
+      color: var(--brand-mid); text-transform: uppercase;
+    }
+
+    .stat-icon {
+      width: 34px; height: 34px; border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center; font-size: 17px;
+    }
+    .stat-icon.teal   { background: var(--teal-50);   color: var(--teal-600); }
+    .stat-icon.blue   { background: var(--blue-50);   color: var(--blue-600); }
+    .stat-icon.amber  { background: var(--amber-50);  color: var(--amber-600); }
+    .stat-icon.purple { background: var(--purple-50); color: var(--purple-600); }
+
+    .stat-value { font-size: 1.65rem; font-weight: 600; color: var(--brand); line-height: 1; }
+    .stat-sub   { font-size: 0.75rem; color: var(--brand-mid); }
+
+    /* ── Toolbar ── */
+    .toolbar {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 0.85rem 1.25rem;
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 14px; flex-wrap: wrap;
+    }
+
+    .search-wrap { position: relative; flex: 1; min-width: 220px; }
+    .search-wrap i {
+      position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+      color: var(--brand-mid); font-size: 15px; pointer-events: none;
+    }
+
+    .search-input {
+      width: 100%; padding: 7px 10px 7px 32px;
+      border: 1px solid var(--border); border-radius: var(--radius-md);
+      font-size: 0.84rem; color: var(--brand); background: var(--bg-page);
+      outline: none; transition: border-color 0.15s;
+    }
+    .search-input:focus { border-color: var(--brand); background: #fff; }
+
+    .filter-group { display: flex; gap: 6px; align-items: center; }
+
+    .filter-btn {
+      padding: 5px 12px; border-radius: 20px; font-size: 0.78rem;
+      border: 1px solid var(--border); background: none;
+      color: var(--brand-mid); cursor: pointer; transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .filter-btn:hover { border-color: var(--brand); color: var(--brand); }
+    .filter-btn.active {
+      background: var(--brand); border-color: var(--brand); color: #fff;
+    }
+
+    /* ── Table card ── */
+    .table-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); overflow: hidden;
+    }
+
+    .table-head-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1rem 1.25rem; border-bottom: 1px solid var(--border);
+    }
+
+    .table-head-row h2 { font-size: 0.9rem; font-weight: 500; color: var(--brand); }
+    .table-count       { font-size: 0.75rem; color: var(--brand-mid); }
+
+    .customers-table { width: 100%; border-collapse: collapse; }
+
+    .customers-table th {
+      font-size: 0.72rem; font-weight: 500; letter-spacing: 0.04em;
+      text-transform: uppercase; color: var(--brand-mid);
+      padding: 0.65rem 1.25rem; text-align: left;
+      background: var(--bg-page); border-bottom: 1px solid var(--border);
+    }
+
+    .customers-table td {
+      padding: 0.85rem 1.25rem; font-size: 0.84rem;
+      color: var(--brand); border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+
+    .customers-table tr:last-child td { border-bottom: none; }
+    .customers-table tbody tr:hover   { background: var(--bg-page); cursor: pointer; }
+
+    .cust-name-cell { display: flex; align-items: center; gap: 10px; }
+
+    .cust-avatar {
+      width: 34px; height: 34px; border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 600; flex-shrink: 0; text-transform: uppercase;
+    }
+    .cust-avatar.clinic  { background: var(--blue-50);   color: var(--blue-600); }
+    .cust-avatar.student { background: var(--teal-50);   color: var(--teal-600); }
+    .cust-avatar.walk_in { background: var(--amber-50);  color: var(--amber-600); }
+
+    .cust-name { font-weight: 500; }
+    .cust-sub  { font-size: 0.73rem; color: var(--brand-mid); margin-top: 1px; }
+
+    /* type pill */
+    .type-pill {
+      display: inline-block; font-size: 0.7rem; font-weight: 500;
+      padding: 2px 9px; border-radius: 20px;
+    }
+    .type-pill.clinic  { background: var(--blue-50);   color: var(--blue-800); }
+    .type-pill.student { background: var(--teal-50);   color: var(--teal-800); }
+    .type-pill.walk_in { background: var(--amber-50);  color: var(--amber-800); }
+
+    .credit-cell { font-size: 0.82rem; }
+    .credit-nil  { color: var(--brand-mid); }
+    .credit-val  { color: var(--brand); font-weight: 500; }
+    .credit-days { font-size: 0.73rem; color: var(--brand-mid); margin-top: 1px; }
+
+    .action-btns { display: flex; gap: 6px; opacity: 0; transition: opacity 0.15s; }
+    .customers-table tbody tr:hover .action-btns { opacity: 1; }
+
+    .icon-btn {
+      background: none; border: 1px solid var(--border);
+      border-radius: 6px; width: 28px; height: 28px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 14px; color: var(--brand-mid);
+      transition: background 0.12s, color 0.12s, border-color 0.12s;
+    }
+    .icon-btn:hover { background: var(--bg-page); color: var(--brand); }
+    .icon-btn.danger:hover { background: var(--red-50); color: var(--red-600); border-color: var(--red-600); }
+
+    .empty-state {
+      padding: 3rem 1.25rem; text-align: center;
+      color: var(--brand-mid); font-size: 0.84rem;
+    }
+    .empty-state i { font-size: 2rem; margin-bottom: 0.5rem; display: block; opacity: 0.3; }
+
+    /* ── Drawer (slide-in panel) ── */
+    .drawer-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.3); z-index: 200;
+    }
+    .drawer-overlay.open { display: block; }
+
+    .drawer {
+      position: fixed; top: 0; right: -560px; bottom: 0;
+      width: 540px; max-width: 95vw;
+      background: var(--bg-card); z-index: 201;
+      display: flex; flex-direction: column;
+      transition: right 0.25s ease;
+      box-shadow: -8px 0 30px rgba(0,0,0,0.12);
+    }
+    .drawer.open { right: 0; }
+
+    .drawer-header {
+      padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .drawer-header h3 { font-size: 1rem; font-weight: 500; color: var(--brand); }
+
+    .drawer-close {
+      background: none; border: none; color: var(--brand-mid);
+      font-size: 20px; cursor: pointer; padding: 2px;
+    }
+    .drawer-close:hover { color: var(--brand); }
+
+    .drawer-body { flex: 1; overflow-y: auto; padding: 1.5rem; }
+    .drawer-footer {
+      padding: 1rem 1.5rem; border-top: 1px solid var(--border);
+      display: flex; justify-content: flex-end; gap: 10px; flex-shrink: 0;
+    }
+
+    /* ── Form inside drawer ── */
+    .form-section-label {
+      font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--brand-mid);
+      margin: 1.25rem 0 0.75rem; padding-bottom: 0.4rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .form-section-label:first-child { margin-top: 0; }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+    .form-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+    .form-group:last-child { margin-bottom: 0; }
+
+    .form-group label {
+      font-size: 0.78rem; font-weight: 500;
+      color: var(--brand-mid); letter-spacing: 0.02em;
+    }
+    .form-group label .req { color: var(--red-600); margin-left: 2px; }
+
+    .form-control {
+      padding: 8px 10px; border: 1px solid var(--border);
+      border-radius: var(--radius-md); font-size: 0.84rem;
+      color: var(--brand); outline: none; transition: border-color 0.15s;
+      background: #fff; width: 100%;
+    }
+    .form-control:focus { border-color: var(--brand); }
+    textarea.form-control { resize: vertical; min-height: 70px; }
+
+    /* ── History panel inside drawer ── */
+    .history-empty {
+      padding: 2rem; text-align: center;
+      color: var(--brand-mid); font-size: 0.84rem;
+    }
+    .history-empty i { font-size: 1.75rem; display: block; margin-bottom: 0.5rem; opacity: 0.3; }
+
+    .history-item {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 0.85rem 0; border-bottom: 1px solid var(--border);
+    }
+    .history-item:last-child { border-bottom: none; }
+
+    .hist-icon {
+      width: 32px; height: 32px; border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; flex-shrink: 0;
+      background: var(--bg-page); color: var(--brand-mid);
+    }
+
+    .hist-body { flex: 1; min-width: 0; }
+    .hist-order { font-size: 0.82rem; font-weight: 500; color: var(--brand); }
+    .hist-inv   { font-size: 0.75rem; color: var(--brand-mid); margin-top: 2px; }
+
+    .hist-right { text-align: right; flex-shrink: 0; }
+    .hist-amount { font-size: 0.84rem; font-weight: 500; color: var(--brand); }
+    .hist-date   { font-size: 0.72rem; color: var(--brand-mid); margin-top: 2px; }
+
+    .hist-status {
+      display: inline-block; font-size: 0.68rem; font-weight: 500;
+      padding: 2px 7px; border-radius: 20px; margin-top: 3px;
+    }
+    .hist-status.pending    { background: var(--amber-50); color: var(--amber-800); }
+    .hist-status.confirmed  { background: var(--blue-50);  color: var(--blue-800); }
+    .hist-status.dispatched { background: var(--teal-50);  color: var(--teal-800); }
+    .hist-status.complete   { background: #EAF3DE; color: #27500A; }
+    .hist-status.cancelled  { background: var(--red-50);   color: var(--red-600); }
+
+    /* ── Drawer tabs ── */
+    .drawer-tabs {
+      display: flex; gap: 0; border-bottom: 1px solid var(--border);
+      flex-shrink: 0; padding: 0 1.5rem;
+    }
+    .dtab {
+      padding: 0.7rem 1rem; font-size: 0.82rem; color: var(--brand-mid);
+      cursor: pointer; border-bottom: 2px solid transparent;
+      margin-bottom: -1px; transition: all 0.15s;
+    }
+    .dtab.active { color: var(--brand); border-bottom-color: var(--brand); font-weight: 500; }
+
+    /* ── Confirm modal ── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45); z-index: 300;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+
+    .confirm-box {
+      background: var(--bg-card); border-radius: var(--radius-lg);
+      width: 100%; max-width: 380px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+      padding: 1.75rem; text-align: center;
+    }
+    .confirm-icon {
+      width: 52px; height: 52px; border-radius: 50%;
+      background: var(--red-50); display: flex; align-items: center;
+      justify-content: center; font-size: 22px; color: var(--red-600); margin: 0 auto 1rem;
+    }
+    .confirm-box h3  { font-size: 0.95rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--brand); }
+    .confirm-box p   { font-size: 0.82rem; color: var(--brand-mid); margin-bottom: 1.5rem; line-height: 1.5; }
+    .confirm-actions { display: flex; gap: 10px; justify-content: center; }
+
+    /* ── Toast ── */
+    .toast-wrap { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 999; display: flex; flex-direction: column; gap: 8px; }
+    .toast {
+      background: var(--brand); color: #fff; font-size: 0.82rem;
+      padding: 10px 16px; border-radius: var(--radius-md);
+      display: flex; align-items: center; gap: 8px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2); animation: slideUp 0.2s ease;
+    }
+    .toast.success { background: var(--teal-600); }
+    .toast.error   { background: var(--red-600); }
+    @keyframes slideUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+    /* ── Skeleton ── */
+    .skeleton {
+      background: linear-gradient(90deg,#f0f0ee 25%,#e8e8e6 50%,#f0f0ee 75%);
+      background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 4px; height: 14px;
+    }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+    @media (max-width: 1100px) { .stat-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 900px)  { .form-row  { grid-template-columns: 1fr; } }
+    @media (max-width: 768px) {
+      .sidebar      { transform: translateX(-100%); transition: transform 0.2s; }
+      .sidebar.open { transform: translateX(0); }
+      .main         { margin-left: 0; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Sidebar ─────────────────────────────────────── -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <img class="logo-img" src="../assets/logo.png" alt="Orthogenics" id="sidebarLogo"/>
+    <div class="logo-text" id="logoFallback" style="display:none">
+      <span class="top">ORTHO</span>
+      <span class="bottom">GENICS</span>
+      <span class="sub">Dental Supply Co.</span>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav" aria-label="Main navigation">
+    <div class="nav-section">Main</div>
+    <a href="dashboard.html" class="nav-link"><i class="ti ti-layout-dashboard"></i> Dashboard</a>
+    <a href="order.html"     class="nav-link"><i class="ti ti-shopping-cart"></i> Orders</a>
+    <a href="invoices.html"  class="nav-link"><i class="ti ti-file-invoice"></i> Invoices</a>
+    <a href="payments.html"  class="nav-link"><i class="ti ti-credit-card"></i> Payments</a>
+
+    <div class="nav-section">Inventory</div>
+    <a href="products.html"  class="nav-link"><i class="ti ti-package"></i> Products</a>
+    <a href="stock.html"     class="nav-link"><i class="ti ti-building-warehouse"></i> Stock</a>
+    <a href="suppliers.html" class="nav-link"><i class="ti ti-truck"></i> Suppliers</a>
+
+    <div class="nav-section">People</div>
+    <a href="customers.html" class="nav-link active"><i class="ti ti-users"></i> Customers</a>
+
+    <div class="nav-section">Insights</div>
+    <a href="reports.html"   class="nav-link"><i class="ti ti-chart-bar"></i> Reports</a>
+  </nav>
+
+  <div class="sidebar-user">
+    <div class="user-avatar" id="userAvatar">--</div>
+    <div class="user-info">
+      <div class="name" id="userName">Loading...</div>
+      <div class="role" id="userRole">—</div>
+    </div>
+    <button class="btn-logout" id="logoutBtn" title="Sign out"><i class="ti ti-logout"></i></button>
+  </div>
+</aside>
+
+<!-- ── Main ────────────────────────────────────────── -->
+<div class="main">
+
+  <header class="topbar">
+    <div class="topbar-left">
+      <h1>Customers</h1>
+      <div class="sub">Clinics, students and walk-in buyers</div>
+    </div>
+    <div class="topbar-right" id="topbarActions"></div>
+  </header>
+
+  <main class="page-body">
+
+    <!-- Stat cards -->
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-card-top">
+          <span class="stat-label">Total customers</span>
+          <div class="stat-icon teal"><i class="ti ti-users"></i></div>
+        </div>
+        <div class="stat-value" id="statTotal">—</div>
+        <div class="stat-sub"   id="statTotalSub">Loading…</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-top">
+          <span class="stat-label">Clinics</span>
+          <div class="stat-icon blue"><i class="ti ti-building-hospital"></i></div>
+        </div>
+        <div class="stat-value" id="statClinics">—</div>
+        <div class="stat-sub">Account customers</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-top">
+          <span class="stat-label">Students</span>
+          <div class="stat-icon purple"><i class="ti ti-school"></i></div>
+        </div>
+        <div class="stat-value" id="statStudents">—</div>
+        <div class="stat-sub">Student pricing tier</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-top">
+          <span class="stat-label">On credit terms</span>
+          <div class="stat-icon amber"><i class="ti ti-credit-card-off"></i></div>
+        </div>
+        <div class="stat-value" id="statCredit">—</div>
+        <div class="stat-sub" id="statCreditSub">With credit limit set</div>
+      </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="search-wrap">
+        <i class="ti ti-search"></i>
+        <input type="text" class="search-input" id="searchInput" placeholder="Search by name, phone or email…" autocomplete="off"/>
+      </div>
+      <div class="filter-group">
+        <button class="filter-btn active" data-type="">All</button>
+        <button class="filter-btn" data-type="CLINIC">Clinics</button>
+        <button class="filter-btn" data-type="STUDENT">Students</button>
+        <button class="filter-btn" data-type="WALK_IN">Walk-in</button>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-card">
+      <div class="table-head-row">
+        <h2>All customers</h2>
+        <span class="table-count" id="tableCount">—</span>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="customers-table">
+          <thead>
+            <tr>
+              <th>Customer</th>
+              <th>Type</th>
+              <th>Contact</th>
+              <th>Phone / Email</th>
+              <th>Credit limit</th>
+              <th>Payment terms</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="customersTbody">
+            <tr>
+              <td colspan="7">
+                <div class="empty-state"><i class="ti ti-loader-2"></i>Loading customers…</div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ── Drawer (Add / Edit / View) ───────────────────── -->
+<div class="drawer-overlay" id="drawerOverlay"></div>
+<div class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawerTitle">
+
+  <div class="drawer-header">
+    <h3 id="drawerTitle">Add customer</h3>
+    <button class="drawer-close" id="drawerClose"><i class="ti ti-x"></i></button>
+  </div>
+
+  <!-- Tabs (only visible in view/edit mode) -->
+  <div class="drawer-tabs" id="drawerTabs" style="display:none">
+    <div class="dtab active" data-tab="details">Details</div>
+    <div class="dtab" data-tab="history">Purchase history</div>
+  </div>
+
+  <!-- Details tab / add form -->
+  <div class="drawer-body" id="drawerBody">
+
+    <div id="tabDetails">
+      <div class="form-section-label">Basic information</div>
+      <div class="form-group">
+        <label for="fieldName">Full name / clinic name <span class="req">*</span></label>
+        <input type="text" id="fieldName" class="form-control" placeholder="e.g. Nairobi Dental Clinic" autocomplete="off"/>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="fieldType">Customer type <span class="req">*</span></label>
+          <select id="fieldType" class="form-control">
+            <option value="CLINIC">Clinic</option>
+            <option value="STUDENT">Student</option>
+            <option value="WALK_IN">Walk-in</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="fieldContact">Contact person</label>
+          <input type="text" id="fieldContact" class="form-control" placeholder="e.g. Dr. Amina Ochieng" autocomplete="off"/>
+        </div>
+      </div>
+
+      <div class="form-section-label">Contact details</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="fieldPhone">Phone</label>
+          <input type="tel" id="fieldPhone" class="form-control" placeholder="e.g. 0722 000 111" autocomplete="off"/>
+        </div>
+        <div class="form-group">
+          <label for="fieldEmail">Email</label>
+          <input type="email" id="fieldEmail" class="form-control" placeholder="e.g. orders@clinic.co.ke" autocomplete="off"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="fieldAddress">Delivery address</label>
+        <input type="text" id="fieldAddress" class="form-control" placeholder="e.g. Tom Mboya St, Nairobi" autocomplete="off"/>
+      </div>
+
+      <div class="form-section-label">Credit & payment terms</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="fieldCreditLimit">Credit limit (KES)</label>
+          <input type="number" id="fieldCreditLimit" class="form-control" placeholder="e.g. 50000" min="0"/>
+        </div>
+        <div class="form-group">
+          <label for="fieldPaymentDays">Payment terms (days)</label>
+          <input type="number" id="fieldPaymentDays" class="form-control" placeholder="e.g. 30" min="0"/>
+        </div>
+      </div>
+
+      <div class="form-section-label">Notes</div>
+      <div class="form-group">
+        <label for="fieldNotes">Notes</label>
+        <textarea id="fieldNotes" class="form-control" placeholder="Special requirements, preferred brands, delivery instructions…"></textarea>
+      </div>
+    </div>
+
+    <!-- History tab -->
+    <div id="tabHistory" style="display:none">
+      <div id="historyContent">
+        <div class="history-empty"><i class="ti ti-loader-2"></i>Loading history…</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="drawer-footer" id="drawerFooter">
+    <button class="topbar-btn" id="drawerCancel">Cancel</button>
+    <button class="btn-primary-dark" id="drawerSave">
+      <i class="ti ti-check"></i> Save customer
+    </button>
+  </div>
+
+</div>
+
+<!-- ── Deactivate confirm ────────────────────────────── -->
+<div class="modal-overlay" id="confirmModal" role="dialog" aria-modal="true">
+  <div class="confirm-box">
+    <div class="confirm-icon"><i class="ti ti-user-off"></i></div>
+    <h3>Remove customer?</h3>
+    <p id="confirmText">This customer will be deactivated. Their order and invoice history will be preserved.</p>
+    <div class="confirm-actions">
+      <button class="topbar-btn" id="confirmCancel">Keep</button>
+      <button class="btn-primary-dark" id="confirmDelete" style="background:var(--red-600);border-color:var(--red-600)">
+        <i class="ti ti-user-off"></i> Remove
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Toast ─────────────────────────────────────────── -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+  // ── Auth ──────────────────────────────────────────────────────
+  const token = localStorage.getItem('token');
+  const user  = JSON.parse(localStorage.getItem('user') || 'null');
+  if (!token || !user) window.location.href = 'login.html';
+
+  const isAdmin = user?.role === 'ADMIN';
+
+  if (user) {
+    const initials = user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0,2);
+    document.getElementById('userAvatar').textContent = initials;
+    document.getElementById('userName').textContent   = user.name;
+    document.getElementById('userRole').textContent   = user.role;
+  }
+
+  const logoImg = document.getElementById('sidebarLogo');
+  logoImg.onerror = () => {
+    logoImg.style.display = 'none';
+    document.getElementById('logoFallback').style.display = 'flex';
+  };
+
+  document.getElementById('logoutBtn').addEventListener('click', () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = 'login.html';
+  });
+
+  // Admin: Add customer button
+  if (isAdmin) {
+    document.getElementById('topbarActions').innerHTML = `
+      <button class="btn-primary-dark" id="addCustomerBtn">
+        <i class="ti ti-plus"></i> Add customer
+      </button>`;
+    document.getElementById('addCustomerBtn').addEventListener('click', () => openDrawer());
+  }
+
+  // ── API ───────────────────────────────────────────────────────
+  async function apiFetch(path, options = {}) {
+    const res = await fetch('/api' + path, {
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', ...(options.headers||{}) },
+      ...options
+    });
+    if (res.status === 401) { window.location.href = 'login.html'; return null; }
+    return res.json();
+  }
+
+  // ── Toast ─────────────────────────────────────────────────────
+  function showToast(msg, type = 'success') {
+    const wrap = document.getElementById('toastWrap');
+    const el   = document.createElement('div');
+    el.className = `toast ${type}`;
+    el.innerHTML = `<i class="ti ti-${type === 'success' ? 'circle-check' : 'alert-circle'}"></i> ${msg}`;
+    wrap.appendChild(el);
+    setTimeout(() => el.remove(), 3500);
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────
+  function esc(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function fmtKES(n) {
+    return 'KES ' + Number(n||0).toLocaleString('en-KE', { minimumFractionDigits:0, maximumFractionDigits:0 });
+  }
+
+  function fmtDate(d) {
+    return new Date(d).toLocaleDateString('en-KE', { day:'numeric', month:'short', year:'numeric' });
+  }
+
+  function typeClass(t) { return (t||'').toLowerCase().replace('_','-').replace('walk-in','walk_in'); }
+
+  function typeLabel(t) {
+    return { CLINIC:'Clinic', STUDENT:'Student', WALK_IN:'Walk-in' }[t] || t;
+  }
+
+  // ── State ─────────────────────────────────────────────────────
+  let allCustomers = [];
+  let activeFilter = '';
+  let editingId    = null;
+  let deletingId   = null;
+  let activeTab    = 'details';
+
+  // ── Load ──────────────────────────────────────────────────────
+  async function loadCustomers(type = '') {
+    const qs   = type ? `?type=${type}` : '';
+    const data = await apiFetch('/customers' + qs);
+    if (!data?.success) { showToast('Failed to load customers', 'error'); return; }
+
+    allCustomers = data.data || [];
+    updateStats(allCustomers);
+    renderTable(allCustomers);
+  }
+
+  function updateStats(list) {
+    const clinics  = list.filter(c => c.type === 'CLINIC').length;
+    const students = list.filter(c => c.type === 'STUDENT').length;
+    const credit   = list.filter(c => c.credit_limit && Number(c.credit_limit) > 0).length;
+
+    document.getElementById('statTotal').textContent    = list.length;
+    document.getElementById('statTotalSub').textContent = list.length + ' active customer' + (list.length !== 1 ? 's' : '');
+    document.getElementById('statClinics').textContent  = clinics;
+    document.getElementById('statStudents').textContent = students;
+    document.getElementById('statCredit').textContent   = credit;
+  }
+
+  function renderTable(list) {
+    const tbody = document.getElementById('customersTbody');
+    document.getElementById('tableCount').textContent = list.length + ' customer' + (list.length !== 1 ? 's' : '');
+
+    if (!list.length) {
+      tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state">
+        <i class="ti ti-users-off"></i>
+        No customers found.${isAdmin ? ' Add your first customer using the button above.' : ''}
+      </div></td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = list.map(c => {
+      const initials = c.name.trim().split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+      const tc       = typeClass(c.type);
+      const hasCredit = c.credit_limit && Number(c.credit_limit) > 0;
+
+      const adminActions = isAdmin ? `
+        <div class="action-btns">
+          <button class="icon-btn" title="Edit" onclick="openDrawer(${c.id}); event.stopPropagation()">
+            <i class="ti ti-pencil"></i>
+          </button>
+          <button class="icon-btn danger" title="Remove" onclick="confirmDeactivate(${c.id},'${esc(c.name)}'); event.stopPropagation()">
+            <i class="ti ti-user-off"></i>
+          </button>
+        </div>` : '';
+
+      return `
+        <tr onclick="openDrawer(${c.id})">
+          <td>
+            <div class="cust-name-cell">
+              <div class="cust-avatar ${tc}">${initials}</div>
+              <div>
+                <div class="cust-name">${esc(c.name)}</div>
+                ${c.address ? `<div class="cust-sub">${esc(c.address.length>40 ? c.address.slice(0,40)+'…' : c.address)}</div>` : ''}
+              </div>
+            </div>
+          </td>
+          <td><span class="type-pill ${tc}">${typeLabel(c.type)}</span></td>
+          <td style="font-size:0.82rem">${c.contact_person ? esc(c.contact_person) : '<span style="color:var(--brand-mid)">—</span>'}</td>
+          <td>
+            ${c.phone ? `<div><a href="tel:${esc(c.phone)}" style="color:var(--brand);text-decoration:none" onclick="event.stopPropagation()">${esc(c.phone)}</a></div>` : ''}
+            ${c.email ? `<div style="margin-top:2px"><a href="mailto:${esc(c.email)}" style="color:var(--blue-600);text-decoration:none;font-size:0.78rem" onclick="event.stopPropagation()">${esc(c.email)}</a></div>` : ''}
+            ${!c.phone && !c.email ? '<span style="color:var(--brand-mid)">—</span>' : ''}
+          </td>
+          <td>
+            ${hasCredit
+              ? `<div class="credit-val">${fmtKES(c.credit_limit)}</div>`
+              : `<span class="credit-nil">—</span>`}
+          </td>
+          <td style="font-size:0.82rem; color:var(--brand-mid)">
+            ${c.payment_term_days > 0 ? `Net ${c.payment_term_days} days` : '—'}
+          </td>
+          <td style="width:80px; text-align:right; padding-right:1.25rem">
+            ${adminActions}
+          </td>
+        </tr>`;
+    }).join('');
+  }
+
+  // ── Search (client-side on displayed list) ────────────────────
+  document.getElementById('searchInput').addEventListener('input', function () {
+    const q = this.value.toLowerCase().trim();
+    const base = activeFilter ? allCustomers.filter(c => c.type === activeFilter) : allCustomers;
+    renderTable(q ? base.filter(c =>
+      (c.name           ||'').toLowerCase().includes(q) ||
+      (c.phone          ||'').toLowerCase().includes(q) ||
+      (c.email          ||'').toLowerCase().includes(q) ||
+      (c.contact_person ||'').toLowerCase().includes(q)
+    ) : base);
+  });
+
+  // ── Filter tabs ───────────────────────────────────────────────
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      activeFilter = this.dataset.type;
+      document.getElementById('searchInput').value = '';
+      loadCustomers(activeFilter);
+    });
+  });
+
+  // ── Drawer ────────────────────────────────────────────────────
+  const drawer        = document.getElementById('drawer');
+  const drawerOverlay = document.getElementById('drawerOverlay');
+  const drawerTitle   = document.getElementById('drawerTitle');
+  const drawerTabs    = document.getElementById('drawerTabs');
+  const drawerFooter  = document.getElementById('drawerFooter');
+  const drawerSave    = document.getElementById('drawerSave');
+  const drawerCancel  = document.getElementById('drawerCancel');
+  const drawerClose   = document.getElementById('drawerClose');
+
+  function openDrawer(id = null) {
+    editingId = id;
+    activeTab = 'details';
+    clearForm();
+
+    drawerTabs.style.display   = 'none';
+    drawerFooter.style.display = 'flex';
+    showTab('details');
+
+    if (id) {
+      const c = allCustomers.find(x => x.id === id);
+      if (!c) return;
+
+      drawerTitle.textContent = c.name;
+      drawerTabs.style.display = 'flex';
+      setTabActive('details');
+
+      document.getElementById('fieldName').value         = c.name             || '';
+      document.getElementById('fieldType').value         = c.type             || 'CLINIC';
+      document.getElementById('fieldContact').value      = c.contact_person   || '';
+      document.getElementById('fieldPhone').value        = c.phone            || '';
+      document.getElementById('fieldEmail').value        = c.email            || '';
+      document.getElementById('fieldAddress').value      = c.address          || '';
+      document.getElementById('fieldCreditLimit').value  = c.credit_limit     || '';
+      document.getElementById('fieldPaymentDays').value  = c.payment_term_days > 0 ? c.payment_term_days : '';
+      document.getElementById('fieldNotes').value        = c.notes            || '';
+
+      if (!isAdmin) drawerFooter.style.display = 'none';
+    } else {
+      drawerTitle.textContent = 'Add customer';
+    }
+
+    drawerOverlay.classList.add('open');
+    drawer.classList.add('open');
+    document.getElementById('fieldName').focus();
+  }
+
+  function closeDrawer() {
+    drawer.classList.remove('open');
+    drawerOverlay.classList.remove('open');
+    editingId = null;
+    clearForm();
+  }
+
+  function clearForm() {
+    ['fieldName','fieldContact','fieldPhone','fieldEmail','fieldAddress','fieldNotes'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+    document.getElementById('fieldType').value         = 'CLINIC';
+    document.getElementById('fieldCreditLimit').value  = '';
+    document.getElementById('fieldPaymentDays').value  = '';
+    document.getElementById('historyContent').innerHTML = '<div class="history-empty"><i class="ti ti-loader-2"></i>Loading history…</div>';
+  }
+
+  drawerClose.addEventListener('click', closeDrawer);
+  drawerCancel.addEventListener('click', closeDrawer);
+  drawerOverlay.addEventListener('click', closeDrawer);
+
+  // ── Drawer tabs ───────────────────────────────────────────────
+  function showTab(tab) {
+    activeTab = tab;
+    document.getElementById('tabDetails').style.display = tab === 'details' ? 'block' : 'none';
+    document.getElementById('tabHistory').style.display = tab === 'history' ? 'block' : 'none';
+  }
+
+  function setTabActive(tab) {
+    document.querySelectorAll('.dtab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  }
+
+  document.querySelectorAll('.dtab').forEach(tab => {
+    tab.addEventListener('click', function () {
+      const t = this.dataset.tab;
+      setTabActive(t);
+      showTab(t);
+      if (t === 'history' && editingId) loadHistory(editingId);
+    });
+  });
+
+  async function loadHistory(id) {
+    const container = document.getElementById('historyContent');
+    container.innerHTML = '<div class="history-empty"><i class="ti ti-loader-2"></i>Loading…</div>';
+
+    const data = await apiFetch(`/customers/${id}/history`);
+    if (!data?.success || !data.data?.length) {
+      container.innerHTML = '<div class="history-empty"><i class="ti ti-receipt-off"></i>No orders yet for this customer.</div>';
+      return;
+    }
+
+    container.innerHTML = data.data.map(row => {
+      const statusCls = (row.status||'').toLowerCase();
+      return `
+        <div class="history-item">
+          <div class="hist-icon"><i class="ti ti-shopping-cart"></i></div>
+          <div class="hist-body">
+            <div class="hist-order">${esc(row.order_number)}</div>
+            <div class="hist-inv">${row.invoice_number ? esc(row.invoice_number) : 'No invoice'}</div>
+            <span class="hist-status ${statusCls}">${statusCls.charAt(0).toUpperCase()+statusCls.slice(1)}</span>
+          </div>
+          <div class="hist-right">
+            <div class="hist-amount">${row.total_amount ? fmtKES(row.total_amount) : '—'}</div>
+            <div class="hist-date">${fmtDate(row.created_at)}</div>
+            ${row.balance_due > 0 ? `<div style="font-size:0.72rem;color:var(--red-600);margin-top:2px">Balance: ${fmtKES(row.balance_due)}</div>` : ''}
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // ── Save ──────────────────────────────────────────────────────
+  drawerSave.addEventListener('click', async () => {
+    const name = document.getElementById('fieldName').value.trim();
+    if (!name) { showToast('Customer name is required', 'error'); document.getElementById('fieldName').focus(); return; }
+
+    const payload = {
+      name,
+      type:              document.getElementById('fieldType').value,
+      contact_person:    document.getElementById('fieldContact').value.trim()     || null,
+      phone:             document.getElementById('fieldPhone').value.trim()       || null,
+      email:             document.getElementById('fieldEmail').value.trim()       || null,
+      address:           document.getElementById('fieldAddress').value.trim()     || null,
+      credit_limit:      document.getElementById('fieldCreditLimit').value ? Number(document.getElementById('fieldCreditLimit').value) : null,
+      payment_term_days: document.getElementById('fieldPaymentDays').value  ? Number(document.getElementById('fieldPaymentDays').value)  : 0,
+      notes:             document.getElementById('fieldNotes').value.trim()       || null,
+    };
+
+    drawerSave.disabled = true;
+    drawerSave.innerHTML = '<i class="ti ti-loader-2"></i> Saving…';
+
+    const result = editingId
+      ? await apiFetch(`/customers/${editingId}`, { method: 'PUT',  body: JSON.stringify(payload) })
+      : await apiFetch('/customers',               { method: 'POST', body: JSON.stringify(payload) });
+
+    drawerSave.disabled = false;
+    drawerSave.innerHTML = '<i class="ti ti-check"></i> Save customer';
+
+    if (result?.success) {
+      showToast(editingId ? 'Customer updated' : 'Customer added');
+      closeDrawer();
+      loadCustomers(activeFilter);
+    } else {
+      showToast(result?.message || 'Something went wrong', 'error');
+    }
+  });
+
+  // ── Deactivate ────────────────────────────────────────────────
+  const confirmModal  = document.getElementById('confirmModal');
+  const confirmText   = document.getElementById('confirmText');
+  const confirmCancel = document.getElementById('confirmCancel');
+  const confirmDelete = document.getElementById('confirmDelete');
+
+  function confirmDeactivate(id, name) {
+    deletingId = id;
+    confirmText.textContent = `"${name}" will be deactivated. Their order and invoice history will be preserved.`;
+    confirmModal.classList.add('open');
+  }
+
+  confirmCancel.addEventListener('click', () => { confirmModal.classList.remove('open'); deletingId = null; });
+  confirmModal.addEventListener('click', e => { if (e.target === confirmModal) { confirmModal.classList.remove('open'); deletingId = null; } });
+
+  confirmDelete.addEventListener('click', async () => {
+    if (!deletingId) return;
+    confirmDelete.disabled = true;
+    confirmDelete.innerHTML = '<i class="ti ti-loader-2"></i> Removing…';
+
+    const result = await apiFetch(`/customers/${deletingId}`, { method: 'DELETE' });
+
+    confirmDelete.disabled = false;
+    confirmDelete.innerHTML = '<i class="ti ti-user-off"></i> Remove';
+
+    if (result?.success) {
+      showToast('Customer removed');
+      confirmModal.classList.remove('open');
+      deletingId = null;
+      loadCustomers(activeFilter);
+    } else {
+      showToast(result?.message || 'Failed to remove customer', 'error');
+    }
+  });
+
+  // ── Boot ──────────────────────────────────────────────────────
+  loadCustomers();
+</script>
+</body>
+</html>
