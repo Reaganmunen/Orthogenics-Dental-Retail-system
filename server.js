@@ -7,7 +7,6 @@ const PORT = process.env.APP_PORT || 3000;
 
 async function start() {
   try {
-    // Test the database connection before starting
     await pool.query('SELECT 1');
     console.log('✅ Database connection verified');
 
@@ -23,4 +22,10 @@ async function start() {
   }
 }
 
-start();
+// ✅ Only run local server when NOT on Vercel
+if (process.env.NODE_ENV !== 'production') {
+  start();
+}
+
+// ✅ Export app for Vercel serverless runtime
+module.exports = app;
