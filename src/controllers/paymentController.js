@@ -1,9 +1,22 @@
 const { PaymentModel, StkPushModel } = require('../models/paymentModel');
 const InvoiceModel = require('../models/invoiceModel');
 
-// ─── Daraja helpers ──────────────────────────────────────────────────────────
+// ─── Daraja token cache ───────────────────────────────────────────────────────
+// Daraja OAuth tokens are valid for 3600 seconds.
+// Caching here means every 5-second poll reuses the same token instead of
+// fetching a new one — that single change eliminates the SpikeArrestViolation
+// and the downstream Incapsula 403 blocks.
+
+let _tokenCache = null; // { token: string, expiresAt: number (ms) }
 
 async function getDarajaToken() {
+  const now = Date.now();
+
+  // Return cached token if it still has >60 s of life left
+  if (_tokenCache && _tokenCache.expiresAt - now > 60_000) {
+    return _tokenCache.token;
+  }
+
   const key    = process.env.MPESA_CONSUMER_KEY;
   const secret = process.env.MPESA_CONSUMER_SECRET;
 
@@ -23,6 +36,11 @@ async function getDarajaToken() {
 
   const data = await res.json();
   if (!data.access_token) throw new Error('No access_token in Daraja response');
+
+  // Cache: Daraja returns expires_in in seconds (default 3600)
+  const ttl = (data.expires_in || 3600) * 1000;
+  _tokenCache = { token: data.access_token, expiresAt: now + ttl };
+
   return data.access_token;
 }
 
@@ -55,6 +73,27 @@ function normalisePhone(phone) {
 }
 
 /**
+ * Safely parse JSON from a fetch Response.
+ * If Daraja returns an HTML block page (Incapsula 403) or any non-JSON body,
+ * this returns null instead of throwing — the caller treats null as "unreachable".
+ */
+async function safeJsonFromResponse(res) {
+  const contentType = res.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    const body = await res.text().catch(() => '');
+    console.warn(`[Daraja] Non-JSON response (${res.status}): ${body.slice(0, 200)}`);
+    return null;
+  }
+  try {
+    return await res.json();
+  } catch (err) {
+    const body = await res.text().catch(() => '');
+    console.warn(`[Daraja] JSON parse error: ${err.message} — body: ${body.slice(0, 200)}`);
+    return null;
+  }
+}
+
+/**
  * Shared invoice pre-payment validation.
  * Returns { ok: true, invoice } or { ok: false, status, message }.
  */
@@ -84,7 +123,7 @@ async function validateInvoiceForPayment(invoice_id) {
  */
 async function queryDarajaSTKStatus(checkoutRequestId) {
   try {
-    const token                              = await getDarajaToken();
+    const token                              = await getDarajaToken(); // uses cache — no new token request
     const { shortcode, password, timestamp } = buildStkPassword();
 
     const res = await fetch(
@@ -101,9 +140,11 @@ async function queryDarajaSTKStatus(checkoutRequestId) {
       }
     );
 
-    const data = await res.json();
-    console.log(`[Daraja query] CheckoutRequestID=${checkoutRequestId} →`, JSON.stringify(data));
-    return data;
+    const data = await safeJsonFromResponse(res);
+    if (data) {
+      console.log(`[Daraja query] CheckoutRequestID=${checkoutRequestId} →`, JSON.stringify(data));
+    }
+    return data; // null if Incapsula blocked or JSON parse failed
   } catch (err) {
     console.error('[Daraja query] Failed:', err.message);
     return null;
@@ -247,7 +288,14 @@ const PaymentController = {
         }
       );
 
-      const stkData = await stkRes.json();
+      const stkData = await safeJsonFromResponse(stkRes);
+
+      if (!stkData) {
+        return res.status(502).json({
+          success: false,
+          message: 'Could not reach Safaricom — please try again in a moment.',
+        });
+      }
 
       if (stkData.ResponseCode !== '0') {
         console.error('Daraja STK push error:', stkData);
@@ -311,32 +359,42 @@ const PaymentController = {
       const darajaRes = await queryDarajaSTKStatus(checkoutRequestId);
 
       if (!darajaRes) {
-        // Daraja unreachable — return PENDING, frontend will retry
+        // Daraja unreachable (Incapsula block, network error, etc.) —
+        // return PENDING so the frontend retries on the next tick.
         return res.json({ success: true, data: { status: 'PENDING', mpesa_ref: null, message: null } });
       }
 
-      // Daraja ResultCode meanings:
-      //   0        → Success
-      //   1032     → Cancelled by user
-      //   1037     → Timeout (DS timeout)
-      //   1        → Insufficient balance
-      //   2001     → Wrong PIN
-      //   17       → M-Pesa rule limit
-      //   1019     → Transaction expired
-      // Any non-zero code that isn't "request still in queue" = terminal failure.
+      // ── Determine if the transaction is still being processed ────────────
       //
-      // Special case: errorCode "500.001.1001" means the request is still being
-      // processed — treat that as PENDING, not failure.
+      // Daraja ResultCode / errorCode meanings for the QUERY endpoint:
+      //
+      //   ResultCode 0           → Success (use this)
+      //   ResultCode 4999        → Transaction still being processed (treat as PENDING)
+      //   errorCode 500.001.1001 → Request still in queue (treat as PENDING)
+      //   errorCode 500.001.1001 → "in process" / "not found" message (treat as PENDING)
+      //
+      // ResultCode 4999 was the bug: parseInt('4999') !== 0, so it fell into
+      // the FAILED branch and called markFailed() on an in-flight payment.
+
+      const resultCodeRaw = darajaRes.ResultCode ?? darajaRes.errorCode ?? null;
+      const resultCode    = resultCodeRaw !== null ? parseInt(String(resultCodeRaw), 10) : NaN;
+
       const stillProcessing =
+        resultCode === 4999 ||                                                // ← THE FIX
         darajaRes.errorCode === '500.001.1001' ||
         darajaRes.errorMessage?.toLowerCase().includes('in process') ||
-        darajaRes.errorMessage?.toLowerCase().includes('not found'); // very fresh push
+        darajaRes.errorMessage?.toLowerCase().includes('not found') ||        // very fresh push
+        darajaRes.ResponseDescription?.toLowerCase().includes('in process');
 
       if (stillProcessing) {
         return res.json({ success: true, data: { status: 'PENDING', mpesa_ref: null, message: null } });
       }
 
-      const resultCode = parseInt(darajaRes.ResultCode ?? darajaRes.errorCode ?? '-1', 10);
+      if (isNaN(resultCode)) {
+        // Unexpected Daraja shape — log and stay PENDING rather than falsely failing
+        console.warn('[Daraja query] Unexpected response shape:', JSON.stringify(darajaRes));
+        return res.json({ success: true, data: { status: 'PENDING', mpesa_ref: null, message: null } });
+      }
 
       if (resultCode === 0) {
         // SUCCESS — Daraja query doesn't return MpesaReceiptNumber, only the callback does.
