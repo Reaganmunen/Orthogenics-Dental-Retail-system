@@ -111,6 +111,7 @@
     .field input, .field select, .field textarea { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 0.88rem; color: var(--brand); background: #fafafa; outline: none; transition: border-color 0.15s; font-family: inherit; }
     .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--brand); background: #fff; }
     .field textarea { resize: vertical; min-height: 70px; }
+    .field input[type="text"]:disabled { background: #f0f0f0; color: #999; cursor: not-allowed; }
     .toggle-row { display: flex; align-items: center; gap: 10px; margin-bottom: 1rem; }
     .toggle-row label { font-size: 0.88rem; color: var(--brand); cursor: pointer; user-select: none; }
 
@@ -120,7 +121,6 @@
     .product-search-wrap input { width: 100%; height: 40px; padding: 0 12px 0 34px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 0.88rem; background: #fafafa; color: var(--brand); outline: none; }
     .product-search-wrap input:focus { border-color: var(--brand); background: #fff; }
 
-    /* Product dropdown */
     .product-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: 0 4px 16px rgba(0,0,0,0.1); z-index: 10; max-height: 220px; overflow-y: auto; display: none; }
     .product-dropdown.open { display: block; }
     .pd-item { display: flex; align-items: center; justify-content: space-between; padding: 0.65rem 1rem; cursor: pointer; transition: background 0.12s; border-bottom: 1px solid var(--border); }
@@ -139,13 +139,11 @@
     .items-table th { font-size: 0.7rem; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; color: var(--brand-mid); padding: 0.55rem 0.9rem; text-align: left; background: var(--bg-page); border-bottom: 1px solid var(--border); }
     .items-table td { padding: 0.6rem 0.9rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
     .items-table tr:last-child td { border-bottom: none; }
-    /* qty input — narrow, centred */
     .qty-input { width: 70px; padding: 5px 8px; border: 1px solid var(--border); border-radius: 5px; font-size: 0.84rem; color: var(--brand); background: #fafafa; outline: none; text-align: center; -moz-appearance: textfield; appearance: textfield; }
     .qty-input::-webkit-outer-spin-button,
     .qty-input::-webkit-inner-spin-button { -webkit-appearance: none; appearance: none; margin: 0; }
     .qty-input:focus { border-color: var(--brand); background: #fff; }
 
-    /* price input — wider, with KES prefix room */
     .price-input-wrap { position: relative; display: inline-flex; align-items: center; }
     .price-input-wrap span { position: absolute; left: 9px; font-size: 0.75rem; font-weight: 500; color: var(--brand-mid); pointer-events: none; white-space: nowrap; }
     .price-input-wrap input { width: 150px; padding: 5px 8px 5px 44px; border: 1px solid var(--border); border-radius: 5px; font-size: 0.84rem; color: var(--brand); background: #fafafa; outline: none; -moz-appearance: textfield; appearance: textfield; }
@@ -165,17 +163,14 @@
     .total-item .val { font-size: 1rem; font-weight: 600; color: var(--brand); }
     .total-item .val.items-val { font-size: 0.88rem; font-weight: 400; }
 
-    /* ── Price floor tooltip ── */
     .price-hint { font-size: 0.68rem; color: var(--brand-mid); margin-top: 2px; }
     .price-hint.error { color: var(--red-600); }
 
-    /* ── Error / success toast ── */
     .toast { position: fixed; bottom: 2rem; right: 2rem; padding: 0.75rem 1.25rem; border-radius: var(--radius-md); font-size: 0.84rem; font-weight: 500; color: #fff; z-index: 999; display: none; align-items: center; gap: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
     .toast.show { display: flex; }
     .toast.success { background: var(--teal-600); }
     .toast.error   { background: var(--red-600); }
 
-    /* ── Pagination ── */
     .pagination { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 1rem; }
     .page-btn { background: none; border: 1px solid var(--border); border-radius: 6px; padding: 5px 12px; font-size: 0.8rem; color: var(--brand); cursor: pointer; }
     .page-btn:hover { background: var(--bg-page); }
@@ -299,7 +294,7 @@
 
     <div class="modal-body">
 
-      <!-- Customer + notes -->
+      <!-- Customer + Walk-in Name -->
       <div class="form-row">
         <div class="field">
           <label for="customerSelect">Customer</label>
@@ -307,6 +302,13 @@
             <option value="">Walk-in (no customer)</option>
           </select>
         </div>
+        <div class="field">
+          <label for="walkinName">Walk-in Customer Name</label>
+          <input type="text" id="walkinName" placeholder="Enter customer name for walk-in" disabled/>
+        </div>
+      </div>
+
+      <div class="form-row">
         <div class="field">
           <label for="orderNotes">Notes</label>
           <input type="text" id="orderNotes" placeholder="Optional notes…"/>
@@ -530,8 +532,21 @@ async function loadCustomers() {
   });
 }
 
+// ── Customer selection / Walk-in name toggle ────────────────
+document.getElementById('customerSelect').addEventListener('change', function() {
+  const walkinInput = document.getElementById('walkinName');
+  if (this.value === '') {
+    walkinInput.disabled = false;
+    walkinInput.placeholder = 'Enter customer name for walk-in';
+  } else {
+    walkinInput.disabled = true;
+    walkinInput.value = '';
+    walkinInput.placeholder = 'Customer selected';
+  }
+});
+
 // ── Order modal ──────────────────────────────────────────────
-let orderItems = [];     // array of { product, qty, price }
+let orderItems = [];
 let isQuoteMode = false;
 
 function openModal(quote = false) {
@@ -546,6 +561,8 @@ function openModal(quote = false) {
   document.getElementById('productSearch').value = '';
   document.getElementById('orderNotes').value    = '';
   document.getElementById('customerSelect').value = '';
+  document.getElementById('walkinName').value = '';
+  document.getElementById('walkinName').disabled = false;
   renderItems();
 }
 
@@ -620,7 +637,6 @@ function addProduct(productId) {
   const product = allProducts.find(p => p.id === productId);
   if (!product) return;
 
-  // If already in list just increment qty
   const existing = orderItems.find(i => i.product.id === productId);
   if (existing) {
     existing.qty++;
@@ -708,6 +724,16 @@ document.getElementById('submitOrderBtn').addEventListener('click', submitOrder)
 async function submitOrder() {
   if (!orderItems.length) { showToast('Add at least one product', 'error'); return; }
 
+  const customerId = document.getElementById('customerSelect').value;
+  const walkinName = document.getElementById('walkinName').value.trim();
+
+  // Validate: if no customer selected, walkin_name is required
+  if (!customerId && !walkinName) {
+    showToast('Please enter a customer name for walk-in customers', 'error');
+    document.getElementById('walkinName').focus();
+    return;
+  }
+
   // Check all prices are above minimum
   const priceViolation = orderItems.find(i => i.price < parseFloat(i.product.min_selling_price));
   if (priceViolation) {
@@ -720,9 +746,10 @@ async function submitOrder() {
   btn.innerHTML = '<i class="ti ti-loader" aria-hidden="true"></i> Saving…';
 
   const payload = {
-    customer_id: document.getElementById('customerSelect').value || null,
+    customer_id: customerId || null,
     is_quote:    document.getElementById('isQuote').checked,
     notes:       document.getElementById('orderNotes').value.trim() || null,
+    walkin_name: customerId ? null : walkinName,
     items: orderItems.map(i => ({
       product_id:    i.product.id,
       quantity:      i.qty,

@@ -37,7 +37,7 @@ const OrderController = {
   // POST /api/orders
   async create(req, res, next) {
     try {
-      const { customer_id, is_quote, notes, items } = req.body;
+      const { customer_id, is_quote, notes, items, walkin_name } = req.body;
 
       if (!items || !Array.isArray(items) || items.length === 0) {
         return res.status(400).json({ success: false, message: 'Order must have at least one item' });
@@ -56,12 +56,21 @@ const OrderController = {
         }
       }
 
+      // If walk-in (no customer_id), require walkin_name
+      if (!customer_id && !walkin_name) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Please provide a customer name for walk-in customers' 
+        });
+      }
+
       const order = await OrderModel.create({
         customer_id: customer_id || null,
         is_quote:    is_quote || false,
         notes,
         created_by:  req.user.id,
         items,
+        walkin_name: walkin_name || null,
       });
 
       res.status(201).json({ success: true, data: order });

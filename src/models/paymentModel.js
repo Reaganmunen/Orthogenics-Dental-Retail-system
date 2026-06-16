@@ -1,5 +1,7 @@
 const { query } = require('./db');
 
+// ─── PaymentModel ─────────────────────────────────────────────────────────────
+
 const PaymentModel = {
 
   async findByInvoice(invoice_id) {
@@ -14,7 +16,6 @@ const PaymentModel = {
     return rows;
   },
 
-  // GET /api/payments — list all payments with filters
   async findAll({ method, from, to, limit = 500 } = {}) {
     let sql = `
       SELECT p.*,
@@ -55,73 +56,91 @@ const PaymentModel = {
   },
 
   // Record a payment — DB trigger trg_payment_inserted auto-updates invoice
-  // amount_paid, status, and paid_at
+  // amount_paid, status, and paid_at.
+  // ON CONFLICT guard prevents double-recording if both the C2B callback and
+  // a manual submission race for the same reference.
   async record({ invoice_id, amount, method, reference, notes, recorded_by }) {
-  const { rows } = await query(
-    `INSERT INTO payments (invoice_id, amount, method, reference, notes, recorded_by)
-     VALUES ($1, $2, $3, $4, $5, $6)
-     ON CONFLICT (invoice_id, reference) WHERE reference IS NOT NULL DO NOTHING
-     RETURNING *`,
-    [invoice_id, amount, method, reference || null, notes || null, recorded_by]
-  );
-  return rows[0] || null;
-},
-
-};
-
-// ─── STK Push Requests ───────────────────────────────────────────────────────
-
-const StkPushModel = {
-
-  // Save a new STK push request (called right after Daraja responds)
-  async create({ checkout_request_id, invoice_id, amount, phone }) {
     const { rows } = await query(
-      `INSERT INTO stk_push_requests
-         (checkout_request_id, invoice_id, amount, phone)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO payments (invoice_id, amount, method, reference, notes, recorded_by)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       ON CONFLICT (invoice_id, reference) WHERE reference IS NOT NULL DO NOTHING
        RETURNING *`,
-      [checkout_request_id, invoice_id, amount, phone]
-    );
-    return rows[0];
-  },
-
-  // Find by CheckoutRequestID — used by callback and status poll
-  async findByCheckoutRequestId(checkout_request_id) {
-    const { rows } = await query(
-      `SELECT * FROM stk_push_requests WHERE checkout_request_id = $1`,
-      [checkout_request_id]
-    );
-    return rows[0] || null;
-  },
-
-  // Mark as COMPLETED when callback arrives with ResultCode 0
-  async markCompleted({ checkout_request_id, mpesa_ref }) {
-    const { rows } = await query(
-      `UPDATE stk_push_requests
-       SET status     = 'COMPLETED',
-           mpesa_ref  = $1,
-           updated_at = NOW()
-       WHERE checkout_request_id = $2
-       RETURNING *`,
-      [mpesa_ref, checkout_request_id]
-    );
-    return rows[0] || null;
-  },
-
-  // Mark as FAILED when callback arrives with non-zero ResultCode, or on timeout
-  async markFailed({ checkout_request_id, message }) {
-    const { rows } = await query(
-      `UPDATE stk_push_requests
-       SET status     = 'FAILED',
-           message    = $1,
-           updated_at = NOW()
-       WHERE checkout_request_id = $2
-       RETURNING *`,
-      [message, checkout_request_id]
+      [invoice_id, amount, method, reference || null, notes || null, recorded_by]
     );
     return rows[0] || null;
   },
 
 };
 
-module.exports = { PaymentModel, StkPushModel };
+// ─── C2bPaymentModel ──────────────────────────────────────────────────────────
+//
+// Stores every inbound C2B (Buy Goods) transaction from Safaricom.
+// Serves two purposes:
+//   1. Idempotency — prevents double-processing if Daraja retries the callback.
+//   2. Reconciliation — unmatched rows (invoice_id IS NULL) appear in the
+//      admin "Unmatched Payments" view for manual linking.
+
+const C2bPaymentModel = {
+
+  // Insert a new C2B transaction row.
+  // ON CONFLICT DO NOTHING on trans_id (unique) gives idempotency.
+  async create({ trans_id, invoice_id, amount, phone, bill_ref, customer_name, raw_payload }) {
+    const { rows } = await query(
+      `INSERT INTO c2b_payments
+         (trans_id, invoice_id, amount, phone, bill_ref, customer_name, raw_payload)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       ON CONFLICT (trans_id) DO NOTHING
+       RETURNING *`,
+      [trans_id, invoice_id || null, amount, phone || null, bill_ref || null, customer_name || null, raw_payload || null]
+    );
+    return rows[0] || null;
+  },
+
+  async findById(id) {
+    const { rows } = await query(
+      `SELECT * FROM c2b_payments WHERE id = $1`,
+      [id]
+    );
+    return rows[0] || null;
+  },
+
+  // Used by the status-poll endpoint to check for the most recent payment
+  // on a given invoice since the customer went to pay.
+  async findLatestByInvoice(invoice_id) {
+    const { rows } = await query(
+      `SELECT * FROM c2b_payments
+       WHERE invoice_id = $1
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      [invoice_id]
+    );
+    return rows[0] || null;
+  },
+
+  // Returns unmatched transactions (no invoice linked) for admin reconciliation.
+  async findUnmatched() {
+    const { rows } = await query(
+      `SELECT * FROM c2b_payments
+       WHERE invoice_id IS NULL
+       ORDER BY created_at DESC
+       LIMIT 200`
+    );
+    return rows;
+  },
+
+  // Manually link an unmatched transaction to an invoice.
+  async linkToInvoice({ c2b_id, invoice_id }) {
+    const { rows } = await query(
+      `UPDATE c2b_payments
+       SET invoice_id = $1,
+           updated_at = NOW()
+       WHERE id = $2
+       RETURNING *`,
+      [invoice_id, c2b_id]
+    );
+    return rows[0] || null;
+  },
+
+};
+
+module.exports = { PaymentModel, C2bPaymentModel };

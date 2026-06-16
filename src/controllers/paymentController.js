@@ -1,18 +1,14 @@
-const { PaymentModel, StkPushModel } = require('../models/paymentModel');
+const { PaymentModel, C2bPaymentModel } = require('../models/paymentModel');
 const InvoiceModel = require('../models/invoiceModel');
 
 // ─── Daraja token cache ───────────────────────────────────────────────────────
-// Daraja OAuth tokens are valid for 3600 seconds.
-// Caching here means every 5-second poll reuses the same token instead of
-// fetching a new one — that single change eliminates the SpikeArrestViolation
-// and the downstream Incapsula 403 blocks.
+// Tokens are valid for 3600 s. Caching avoids re-fetching on every request.
 
 let _tokenCache = null; // { token: string, expiresAt: number (ms) }
 
 async function getDarajaToken() {
   const now = Date.now();
 
-  // Return cached token if it still has >60 s of life left
   if (_tokenCache && _tokenCache.expiresAt - now > 60_000) {
     return _tokenCache.token;
   }
@@ -37,7 +33,6 @@ async function getDarajaToken() {
   const data = await res.json();
   if (!data.access_token) throw new Error('No access_token in Daraja response');
 
-  // Cache: Daraja returns expires_in in seconds (default 3600)
   const ttl = (data.expires_in || 3600) * 1000;
   _tokenCache = { token: data.access_token, expiresAt: now + ttl };
 
@@ -45,37 +40,8 @@ async function getDarajaToken() {
 }
 
 /**
- * Build the STK password + timestamp.
- * Uses EAT (UTC+3) — Daraja requires the timestamp match its server clock.
- */
-function buildStkPassword() {
-  const shortcode = process.env.MPESA_SHORTCODE;
-  const passkey   = process.env.MPESA_PASSKEY;
-
-  if (!shortcode || !passkey) throw new Error('MPESA_SHORTCODE / MPESA_PASSKEY not set');
-
-  const nowEAT    = new Date(Date.now() + 3 * 60 * 60 * 1000);
-  const timestamp = nowEAT.toISOString().replace(/[-T:.Z]/g, '').slice(0, 14);
-  const password  = Buffer.from(`${shortcode}${passkey}${timestamp}`).toString('base64');
-
-  return { shortcode, password, timestamp };
-}
-
-/**
- * Normalise a Kenyan phone number to the 2547XXXXXXXX format Daraja expects.
- * Handles: 07XX, +2547XX, 2547XX
- */
-function normalisePhone(phone) {
-  const cleaned = String(phone).replace(/\s+/g, '').replace(/^\+/, '');
-  if (cleaned.startsWith('0'))   return '254' + cleaned.slice(1);
-  if (cleaned.startsWith('254')) return cleaned;
-  return cleaned;
-}
-
-/**
  * Safely parse JSON from a fetch Response.
- * If Daraja returns an HTML block page (Incapsula 403) or any non-JSON body,
- * this returns null instead of throwing — the caller treats null as "unreachable".
+ * Returns null instead of throwing if body is not JSON (e.g. Incapsula block page).
  */
 async function safeJsonFromResponse(res) {
   const contentType = res.headers.get('content-type') || '';
@@ -108,54 +74,11 @@ async function validateInvoiceForPayment(invoice_id) {
   return { ok: true, invoice };
 }
 
-/**
- * Query Daraja directly for the current status of an STK push.
- *
- * This is the KEY FIX for "status stays PENDING forever":
- *
- * The Daraja callback fires asynchronously — if your server restarts, ngrok
- * rotates, or the callback is slow, the stk_push_requests row never updates.
- * Calling the query API from stkStatus() means the frontend poll ALWAYS gets
- * a definitive answer directly from Safaricom, regardless of whether the
- * callback fired.
- *
- * Returns the raw Daraja response object, or null if the request failed.
- */
-async function queryDarajaSTKStatus(checkoutRequestId) {
-  try {
-    const token                              = await getDarajaToken(); // uses cache — no new token request
-    const { shortcode, password, timestamp } = buildStkPassword();
-
-    const res = await fetch(
-      'https://sandbox.safaricom.co.ke/mpesa/stkpushquery/v1/query',
-      {
-        method:  'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          BusinessShortCode: shortcode,
-          Password:          password,
-          Timestamp:         timestamp,
-          CheckoutRequestID: checkoutRequestId,
-        }),
-      }
-    );
-
-    const data = await safeJsonFromResponse(res);
-    if (data) {
-      console.log(`[Daraja query] CheckoutRequestID=${checkoutRequestId} →`, JSON.stringify(data));
-    }
-    return data; // null if Incapsula blocked or JSON parse failed
-  } catch (err) {
-    console.error('[Daraja query] Failed:', err.message);
-    return null;
-  }
-}
-
-// ─── Controller ─────────────────────────────────────────────────────────────
+// ─── Controller ──────────────────────────────────────────────────────────────
 
 const PaymentController = {
 
-  // ── GET /api/payments ────────────────────────────────────────────────────
+  // ── GET /api/payments ──────────────────────────────────────────────────────
   async getAll(req, res, next) {
     try {
       const { method, from, to, limit } = req.query;
@@ -166,7 +89,7 @@ const PaymentController = {
     }
   },
 
-  // ── GET /api/payments/invoice/:invoice_id ────────────────────────────────
+  // ── GET /api/payments/invoice/:invoice_id ──────────────────────────────────
   async getByInvoice(req, res, next) {
     try {
       const payments = await PaymentModel.findByInvoice(req.params.invoice_id);
@@ -176,7 +99,7 @@ const PaymentController = {
     }
   },
 
-  // ── GET /api/payments/invoice-lookup?q=INV-2026-0041 ─────────────────────
+  // ── GET /api/payments/invoice-lookup?q=INV-2026-0041 ──────────────────────
   async invoiceLookup(req, res, next) {
     try {
       const { q } = req.query;
@@ -198,7 +121,7 @@ const PaymentController = {
     }
   },
 
-  // ── POST /api/payments ───────────────────────────────────────────────────
+  // ── POST /api/payments — record a manual payment (Cash / Bank Transfer) ────
   async record(req, res, next) {
     try {
       const { invoice_id, amount, method, reference, notes } = req.body;
@@ -210,6 +133,7 @@ const PaymentController = {
         });
       }
 
+      // MPESA manual entries are allowed here (staff pastes a received ref)
       const validMethods = ['MPESA', 'CASH', 'BANK_TRANSFER'];
       if (!validMethods.includes(method)) {
         return res.status(400).json({
@@ -240,279 +164,286 @@ const PaymentController = {
     }
   },
 
-  // ── POST /api/payments/mpesa/stk-push ────────────────────────────────────
-  async stkPush(req, res, next) {
-    try {
-      const { invoice_id, phone, amount } = req.body;
+  // ─────────────────────────────────────────────────────────────────────────
+  // C2B  (Till / Buy Goods)
+  //
+  // Flow:
+  //   1. On server startup (or via POST /api/payments/mpesa/register-urls),
+  //      register your validation + confirmation URLs with Daraja once.
+  //   2. Customer opens M-Pesa on their phone, goes to:
+  //        Lipa na M-Pesa → Buy Goods → enters your till number + amount
+  //   3. Safaricom calls your ValidationURL — you respond 0 to accept.
+  //   4. Safaricom calls your ConfirmationURL — you record the payment.
+  //   5. The frontend polls GET /api/payments/mpesa/c2b-status/:invoiceId
+  //      every few seconds to know when the invoice flips to PAID/PARTIAL.
+  // ─────────────────────────────────────────────────────────────────────────
 
-      if (!invoice_id || !phone || !amount) {
-        return res.status(400).json({
+  /**
+   * POST /api/payments/mpesa/register-urls
+   *
+   * Registers C2B validation + confirmation URLs with Safaricom.
+   * Only needs to be called ONCE per shortcode (or after your URL changes).
+   * Protect it with the `protect` middleware so only staff can call it.
+   *
+   * Required env vars:
+   *   MPESA_SHORTCODE          — your Till number
+   *   MPESA_C2B_VALIDATION_URL — your public HTTPS validation endpoint
+   *   MPESA_C2B_CONFIRM_URL    — your public HTTPS confirmation endpoint
+   */
+  async registerC2BUrls(req, res, next) {
+    try {
+      const token     = await getDarajaToken();
+      const shortcode = process.env.MPESA_SHORTCODE;
+      const validUrl  = process.env.MPESA_C2B_VALIDATION_URL;
+      const confirmUrl= process.env.MPESA_C2B_CONFIRM_URL;
+
+      if (!shortcode || !validUrl || !confirmUrl) {
+        return res.status(500).json({
           success: false,
-          message: 'invoice_id, phone and amount are required',
+          message: 'MPESA_SHORTCODE, MPESA_C2B_VALIDATION_URL and MPESA_C2B_CONFIRM_URL must all be set',
         });
       }
 
-      if (parseFloat(amount) <= 0) {
-        return res.status(400).json({ success: false, message: 'Amount must be greater than zero' });
-      }
-
-      const check = await validateInvoiceForPayment(invoice_id);
-      if (!check.ok) return res.status(check.status).json({ success: false, message: check.message });
-      const { invoice } = check;
-
-      const formattedPhone                    = normalisePhone(phone);
-      const { shortcode, password, timestamp } = buildStkPassword();
-      const token                             = await getDarajaToken();
-
-      const stkRes = await fetch(
-        'https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest',
+      const darajaRes = await fetch(
+        'https://sandbox.safaricom.co.ke/mpesa/c2b/v1/registerurl',
         {
           method:  'POST',
-          headers: {
-            Authorization:  `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            BusinessShortCode: shortcode,
-            Password:          password,
-            Timestamp:         timestamp,
-            TransactionType:   'CustomerPayBillOnline',
-            Amount:            Math.ceil(parseFloat(amount)),
-            PartyA:            formattedPhone,
-            PartyB:            shortcode,
-            PhoneNumber:       formattedPhone,
-            CallBackURL:       process.env.MPESA_CALLBACK_URL,
-            AccountReference:  invoice.invoice_number || `INV-${invoice_id}`,
-            TransactionDesc:   `Payment for ${invoice.invoice_number || 'invoice ' + invoice_id}`,
+            ShortCode:       shortcode,
+            ResponseType:    'Completed',  // auto-accept if our validation URL is slow
+            ConfirmationURL: confirmUrl,
+            ValidationURL:   validUrl,
           }),
         }
       );
 
-      const stkData = await safeJsonFromResponse(stkRes);
+      const data = await safeJsonFromResponse(darajaRes);
 
-      if (!stkData) {
-        return res.status(502).json({
-          success: false,
-          message: 'Could not reach Safaricom — please try again in a moment.',
-        });
+      if (!data) {
+        return res.status(502).json({ success: false, message: 'Could not reach Safaricom' });
       }
 
-      if (stkData.ResponseCode !== '0') {
-        console.error('Daraja STK push error:', stkData);
-        return res.status(502).json({
-          success: false,
-          message: stkData.errorMessage || stkData.ResultDesc || 'STK push failed',
-        });
-      }
+      console.log('[C2B registerUrls]', JSON.stringify(data));
 
-      await StkPushModel.create({
-        checkout_request_id: stkData.CheckoutRequestID,
-        invoice_id,
-        amount:  parseFloat(amount),
-        phone:   formattedPhone,
-      });
-
-      res.json({
-        success: true,
-        data: { CheckoutRequestID: stkData.CheckoutRequestID },
-      });
+      // Daraja returns ResponseDescription "Success" on success
+      res.json({ success: true, data });
     } catch (err) {
       next(err);
     }
   },
 
-  // ── GET /api/payments/mpesa/status/:checkoutRequestId ───────────────────
-  //
-  // THE MAIN FIX IS HERE.
-  //
-  // Old behaviour: only read stk_push_requests table → stays PENDING forever
-  // if the callback never fired (ngrok down, slow network, server restart).
-  //
-  // New behaviour:
-  //   1. Read local DB row.
-  //   2. If still PENDING → ask Daraja directly via the STK query API.
-  //   3. If Daraja says completed/failed → update DB row + return real status.
-  //   4. Frontend poll now always gets a definitive answer.
-  //
-  async stkStatus(req, res, next) {
-    try {
-      const { checkoutRequestId } = req.params;
+  /**
+   * POST /api/payments/mpesa/c2b-validate
+   *
+   * Safaricom calls this BEFORE processing a C2B transaction.
+   * You have a few seconds to respond:
+   *   { ResultCode: 0, ResultDesc: 'Accepted' }  → allow
+   *   { ResultCode: 1, ResultDesc: 'Rejected' }  → block
+   *
+   * For Buy Goods you typically always accept (return 0).
+   * Add business logic here if you ever need to reject (e.g. known blacklisted number).
+   *
+   * This route must NOT have auth middleware — Safaricom calls it directly.
+   */
+  async c2bValidation(req, res) {
+    // Always accept; Safaricom requires a fast response
+    res.json({ ResultCode: 0, ResultDesc: 'Accepted' });
 
-      const row = await StkPushModel.findByCheckoutRequestId(checkoutRequestId);
-      if (!row) {
-        return res.status(404).json({ success: false, message: 'STK push request not found' });
-      }
-
-      // Already settled from the callback — just return it
-      if (row.status !== 'PENDING') {
-        return res.json({
-          success: true,
-          data: {
-            status:    row.status,
-            mpesa_ref: row.mpesa_ref || null,
-            message:   row.message  || null,
-          },
-        });
-      }
-
-      // ── Still PENDING — query Daraja directly ────────────────────────────
-      const darajaRes = await queryDarajaSTKStatus(checkoutRequestId);
-
-      if (!darajaRes) {
-        // Daraja unreachable (Incapsula block, network error, etc.) —
-        // return PENDING so the frontend retries on the next tick.
-        return res.json({ success: true, data: { status: 'PENDING', mpesa_ref: null, message: null } });
-      }
-
-      // ── Determine if the transaction is still being processed ────────────
-      //
-      // Daraja ResultCode / errorCode meanings for the QUERY endpoint:
-      //
-      //   ResultCode 0           → Success (use this)
-      //   ResultCode 4999        → Transaction still being processed (treat as PENDING)
-      //   errorCode 500.001.1001 → Request still in queue (treat as PENDING)
-      //   errorCode 500.001.1001 → "in process" / "not found" message (treat as PENDING)
-      //
-      // ResultCode 4999 was the bug: parseInt('4999') !== 0, so it fell into
-      // the FAILED branch and called markFailed() on an in-flight payment.
-
-      const resultCodeRaw = darajaRes.ResultCode ?? darajaRes.errorCode ?? null;
-      const resultCode    = resultCodeRaw !== null ? parseInt(String(resultCodeRaw), 10) : NaN;
-
-      const stillProcessing =
-        resultCode === 4999 ||                                                // ← THE FIX
-        darajaRes.errorCode === '500.001.1001' ||
-        darajaRes.errorMessage?.toLowerCase().includes('in process') ||
-        darajaRes.errorMessage?.toLowerCase().includes('not found') ||        // very fresh push
-        darajaRes.ResponseDescription?.toLowerCase().includes('in process');
-
-      if (stillProcessing) {
-        return res.json({ success: true, data: { status: 'PENDING', mpesa_ref: null, message: null } });
-      }
-
-      if (isNaN(resultCode)) {
-        // Unexpected Daraja shape — log and stay PENDING rather than falsely failing
-        console.warn('[Daraja query] Unexpected response shape:', JSON.stringify(darajaRes));
-        return res.json({ success: true, data: { status: 'PENDING', mpesa_ref: null, message: null } });
-      }
-
-      if (resultCode === 0) {
-        // SUCCESS — Daraja query doesn't return MpesaReceiptNumber, only the callback does.
-        // Mark COMPLETED in DB; mpesa_ref will be filled when callback arrives (usually seconds later).
-        const updated = await StkPushModel.markCompleted({
-          checkout_request_id: checkoutRequestId,
-          mpesa_ref: null, // callback will update this
-        });
-
-        return res.json({
-          success: true,
-          data: {
-            status:    'COMPLETED',
-            mpesa_ref: updated?.mpesa_ref || null,
-            message:   'Payment confirmed by Safaricom',
-          },
-        });
-
-      } else {
-        // FAILED / CANCELLED — map common codes to readable messages
-        const messageMap = {
-          1032: 'Payment request was cancelled.',
-          1037: 'Payment request timed out — no response from phone.',
-          1:    'Insufficient M-Pesa balance.',
-          2001: 'Wrong M-Pesa PIN entered.',
-          17:   'M-Pesa transaction limit reached.',
-          1019: 'Transaction expired.',
-        };
-        const message = messageMap[resultCode]
-          || darajaRes.ResultDesc
-          || darajaRes.errorMessage
-          || 'Payment was not completed.';
-
-        await StkPushModel.markFailed({
-          checkout_request_id: checkoutRequestId,
-          message,
-        });
-
-        return res.json({
-          success: true,
-          data: { status: 'FAILED', mpesa_ref: null, message },
-        });
-      }
-
-    } catch (err) {
-      next(err);
-    }
+    // Log for debugging — remove or thin down in production
+    console.log('[C2B validate]', JSON.stringify(req.body));
   },
 
-  // ── POST /api/payments/mpesa/callback ────────────────────────────────────
-  //
-  // Safaricom calls this after the customer approves or declines the prompt.
-  // Respond 200 immediately (Daraja requires a fast ack), then process async.
-  //
-  async mpesaCallback(req, res) {
-    // Acknowledge immediately — Daraja will retry if it doesn't get a fast 200
+  /**
+   * POST /api/payments/mpesa/c2b-confirm
+   *
+   * Safaricom calls this AFTER a transaction completes successfully.
+   * Payload shape (key fields):
+   *   TransactionType    — "Buy Goods"
+   *   TransID            — M-Pesa receipt number  (e.g. "RHL7NJUKB4")
+   *   TransAmount        — amount paid
+   *   BusinessShortCode  — your till number
+   *   BillRefNumber      — what the customer typed as account reference
+   *                        (you can instruct customers to type the invoice number)
+   *   MSISDN             — customer phone (254...)
+   *   FirstName / LastName / MiddleName
+   *
+   * This route must NOT have auth middleware — Safaricom calls it directly.
+   * Respond 200 immediately; process async.
+   */
+  async c2bConfirmation(req, res) {
+    // Acknowledge immediately — Daraja retries if it doesn't get a fast 200
     res.json({ ResultCode: 0, ResultDesc: 'Accepted' });
 
     try {
-      const body = req.body?.Body?.stkCallback;
+      const body = req.body;
 
-      if (!body) {
-        console.warn('M-Pesa callback: empty or malformed payload', JSON.stringify(req.body));
+      if (!body || !body.TransID) {
+        console.warn('[C2B confirm] Empty or malformed payload:', JSON.stringify(body));
         return;
       }
 
-      const checkoutRequestId = body.CheckoutRequestID;
-
-      // ── Payment failed / cancelled by user ───────────────────────────────
-      if (body.ResultCode !== 0) {
-        console.log(`M-Pesa callback: not completed — ${body.ResultDesc} (code ${body.ResultCode}) — ${checkoutRequestId}`);
-        await StkPushModel.markFailed({
-          checkout_request_id: checkoutRequestId,
-          message: body.ResultDesc || 'Payment not completed',
-        });
-        return;
-      }
-
-      // ── Payment succeeded ────────────────────────────────────────────────
-      const meta     = body.CallbackMetadata?.Item || [];
-      const get      = (name) => meta.find(i => i.Name === name)?.Value;
-      const amount   = get('Amount');
-      const mpesaRef = get('MpesaReceiptNumber');
-      const phone    = get('PhoneNumber');
+      const transId     = body.TransID;           // M-Pesa receipt
+      const amount      = parseFloat(body.TransAmount);
+      const phone       = body.MSISDN;
+      const billRef     = (body.BillRefNumber || '').trim().toUpperCase(); // customer typed this
+      const customerName= [body.FirstName, body.MiddleName, body.LastName].filter(Boolean).join(' ');
 
       console.log(
-        `M-Pesa payment received: KES ${amount} | Ref: ${mpesaRef} | ` +
-        `Phone: ${phone} | CheckoutID: ${checkoutRequestId}`
+        `[C2B confirm] KES ${amount} | Ref: ${transId} | ` +
+        `Phone: ${phone} | BillRef: ${billRef} | Customer: ${customerName}`
       );
 
-      // Mark the STK row as completed (this also fills mpesa_ref)
-      const stkRow = await StkPushModel.markCompleted({
-        checkout_request_id: checkoutRequestId,
-        mpesa_ref:           mpesaRef,
-      });
+      // ── 1. Try to match the bill reference to an invoice number ────────────
+      //
+      // You instruct customers to type the invoice number (e.g. "INV-2026-0041")
+      // as the account reference when they pay. Match it here.
+      //
+      // If the reference doesn't match any invoice we still record the payment
+      // as unmatched so you can reconcile manually in the payments table.
 
-      if (!stkRow) {
-        console.error(
-          `M-Pesa callback: no stk_push_request found for CheckoutRequestID ${checkoutRequestId}`
-        );
-        return;
+      let invoiceId    = null;
+      let invoiceFound = false;
+
+      if (billRef) {
+        const results = await InvoiceModel.findAll({ search: billRef });
+        const match   = results.find(
+          i => (i.invoice_number || '').toUpperCase() === billRef
+        ) || results[0] || null;
+
+        if (match && !['PAID', 'CANCELLED'].includes(match.status)) {
+          invoiceId    = match.id;
+          invoiceFound = true;
+        }
       }
 
-      // Record the payment. The DB has a unique constraint on (invoice_id, reference)
-      // so even if the frontend also submits, only one row is ever inserted.
-      await PaymentModel.record({
-        invoice_id:  stkRow.invoice_id,
-        amount:      stkRow.amount,
-        method:      'MPESA',
-        reference:   mpesaRef,
-        notes:       `M-Pesa from ${phone} (confirmed via Daraja callback)`,
-        recorded_by: 1, // system user — change to your system user ID
+      // ── 2. Save the raw C2B transaction (for reconciliation + idempotency) ─
+      await C2bPaymentModel.create({
+        trans_id:      transId,
+        invoice_id:    invoiceId,   // null if unmatched
+        amount,
+        phone,
+        bill_ref:      billRef,
+        customer_name: customerName,
+        raw_payload:   JSON.stringify(body),
       });
 
-      console.log(`Payment recorded for invoice ${stkRow.invoice_id} | Ref: ${mpesaRef}`);
+      // ── 3. Record the payment against the invoice if matched ───────────────
+      if (invoiceFound && invoiceId) {
+        await PaymentModel.record({
+          invoice_id:  invoiceId,
+          amount,
+          method:      'MPESA',
+          reference:   transId,
+          notes:       `M-Pesa Buy Goods from ${phone} (${customerName}) — auto via C2B callback`,
+          recorded_by: 1,           // system user — change to your system user ID
+        });
+
+        console.log(`[C2B confirm] Payment recorded for invoice #${invoiceId} | Ref: ${transId}`);
+      } else {
+        console.warn(
+          `[C2B confirm] Could not match BillRefNumber "${billRef}" to any open invoice. ` +
+          `Transaction ${transId} saved to c2b_payments as unmatched.`
+        );
+      }
 
     } catch (err) {
-      console.error('M-Pesa callback processing error:', err.message);
+      console.error('[C2B confirm] Processing error:', err.message);
+    }
+  },
+
+  /**
+   * GET /api/payments/mpesa/c2b-status/:invoiceId
+   *
+   * The frontend polls this every few seconds after the customer is sent to pay.
+   * Returns the current invoice status + balance_due so the UI can react when
+   * the payment comes in and the DB trigger flips the invoice to PAID/PARTIAL.
+   *
+   * Also returns whether a C2B transaction has been recorded against this invoice
+   * since the poll started (checked via the c2b_payments table).
+   */
+  async c2bStatus(req, res, next) {
+    try {
+      const { invoiceId } = req.params;
+
+      const invoice = await InvoiceModel.findById(invoiceId);
+      if (!invoice) {
+        return res.status(404).json({ success: false, message: 'Invoice not found' });
+      }
+
+      // Also check c2b_payments table for the most recent transaction on this invoice
+      const latestC2b = await C2bPaymentModel.findLatestByInvoice(invoiceId);
+
+      res.json({
+        success: true,
+        data: {
+          invoice_status: invoice.status,            // UNPAID | PARTIAL | PAID | OVERDUE
+          balance_due:    invoice.balance_due,
+          amount_paid:    invoice.amount_paid,
+          // If there's a recent C2B hit, surface the receipt for the UI to display
+          last_trans_id:  latestC2b?.trans_id  || null,
+          last_amount:    latestC2b?.amount    || null,
+          last_phone:     latestC2b?.phone     || null,
+        },
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  /**
+   * GET /api/payments/mpesa/unmatched
+   *
+   * Returns C2B transactions that have no matched invoice_id.
+   * Useful for the admin to manually reconcile payments.
+   */
+  async unmatchedC2b(req, res, next) {
+    try {
+      const rows = await C2bPaymentModel.findUnmatched();
+      res.json({ success: true, data: rows });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  /**
+   * POST /api/payments/mpesa/match-c2b
+   *
+   * Manually match an unmatched C2B transaction to an invoice.
+   * Body: { c2b_id, invoice_id }
+   */
+  async matchC2b(req, res, next) {
+    try {
+      const { c2b_id, invoice_id } = req.body;
+      if (!c2b_id || !invoice_id) {
+        return res.status(400).json({ success: false, message: 'c2b_id and invoice_id are required' });
+      }
+
+      const check = await validateInvoiceForPayment(invoice_id);
+      if (!check.ok) return res.status(check.status).json({ success: false, message: check.message });
+
+      const c2b = await C2bPaymentModel.findById(c2b_id);
+      if (!c2b) return res.status(404).json({ success: false, message: 'C2B transaction not found' });
+      if (c2b.invoice_id) {
+        return res.status(400).json({ success: false, message: 'Transaction is already matched to an invoice' });
+      }
+
+      // Link c2b row to invoice
+      await C2bPaymentModel.linkToInvoice({ c2b_id, invoice_id });
+
+      // Record the payment
+      const payment = await PaymentModel.record({
+        invoice_id,
+        amount:      c2b.amount,
+        method:      'MPESA',
+        reference:   c2b.trans_id,
+        notes:       `Manually matched C2B payment from ${c2b.phone} (${c2b.customer_name})`,
+        recorded_by: req.user.id,
+      });
+
+      res.json({ success: true, data: payment });
+    } catch (err) {
+      next(err);
     }
   },
 

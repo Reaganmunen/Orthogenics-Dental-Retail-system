@@ -5,7 +5,7 @@ const InvoiceModel = {
   async findAll({ status, search } = {}) {
     let sql = `
       SELECT i.*,
-             c.name  AS customer_name,
+             COALESCE(c.name, i.customer_name) AS customer_name,
              c.phone AS customer_phone,
              o.order_number
       FROM   invoices i
@@ -21,7 +21,7 @@ const InvoiceModel = {
     }
     if (search) {
       params.push(`%${search}%`);
-      sql += ` AND (i.invoice_number ILIKE $${params.length} OR c.name ILIKE $${params.length})`;
+      sql += ` AND (i.invoice_number ILIKE $${params.length} OR COALESCE(c.name, i.customer_name) ILIKE $${params.length})`;
     }
 
     sql += ` ORDER BY i.issued_at DESC`;
@@ -32,7 +32,7 @@ const InvoiceModel = {
   async findById(id) {
     const { rows } = await query(
       `SELECT i.*,
-              c.name    AS customer_name,
+              COALESCE(c.name, i.customer_name) AS customer_name,
               c.address AS customer_address,
               c.phone   AS customer_phone,
               c.email   AS customer_email,
@@ -69,7 +69,7 @@ const InvoiceModel = {
   async listOverdue() {
     const { rows } = await query(
       `SELECT i.*,
-              c.name  AS customer_name,
+              COALESCE(c.name, i.customer_name) AS customer_name,
               c.phone AS customer_phone
        FROM   invoices i
        JOIN   orders o ON o.id = i.order_id

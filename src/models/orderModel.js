@@ -6,7 +6,7 @@ const OrderModel = {
   async findAll({ status, customer_id, is_quote, limit, product_id } = {}) {
     let sql = `
       SELECT o.*,
-             c.name AS customer_name,
+             COALESCE(c.name, o.walkin_name) AS customer_name,
              u.name AS created_by_name,
              COALESCE(SUM(oi.line_total), 0) AS order_total
       FROM   orders o
@@ -37,7 +37,7 @@ const OrderModel = {
       )`;
     }
 
-    sql += ` GROUP BY o.id, c.name, u.name`;
+    sql += ` GROUP BY o.id, c.name, u.name, o.walkin_name`;
     sql += ` ORDER BY o.created_at DESC`;
 
     if (limit) {
@@ -52,7 +52,7 @@ const OrderModel = {
   async findById(id) {
     const { rows } = await query(
       `SELECT o.*,
-              c.name AS customer_name,
+              COALESCE(c.name, o.walkin_name) AS customer_name,
               c.type AS customer_type,
               c.phone AS customer_phone,
               u.name AS created_by_name
@@ -66,7 +66,7 @@ const OrderModel = {
   },
 
   // Create order + its line items in one transaction
-  async create({ customer_id, is_quote = false, notes, created_by, items }) {
+  async create({ customer_id, is_quote = false, notes, created_by, items, walkin_name }) {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
@@ -76,10 +76,10 @@ const OrderModel = {
       const order_number = numRows[0].order_number;
 
       const { rows: orderRows } = await client.query(
-        `INSERT INTO orders (order_number, customer_id, is_quote, notes, created_by)
-         VALUES ($1, $2, $3, $4, $5)
+        `INSERT INTO orders (order_number, customer_id, is_quote, notes, created_by, walkin_name)
+         VALUES ($1, $2, $3, $4, $5, $6)
          RETURNING *`,
-        [order_number, customer_id || null, is_quote, notes || null, created_by]
+        [order_number, customer_id || null, is_quote, notes || null, created_by, walkin_name || null]
       );
       const order = orderRows[0];
 
@@ -151,22 +151,43 @@ const OrderModel = {
       const { rows: invNum } = await client.query(`SELECT next_invoice_number() AS inv`);
       const invoice_number = invNum[0].inv;
 
-      // Payment term from customer (or default 0 days = due immediately)
-      const { rows: custRows } = await client.query(
-        `SELECT payment_term_days FROM customers WHERE id = $1`,
-        [order.customer_id]
-      );
-      const term_days = custRows[0]?.payment_term_days || 0;
+      // Get customer name (either from customers table or walkin_name)
+      let customer_name = order.walkin_name;
+      if (order.customer_id) {
+        const { rows: custRows } = await client.query(
+          `SELECT name, payment_term_days FROM customers WHERE id = $1`,
+          [order.customer_id]
+        );
+        if (custRows[0]) {
+          customer_name = custRows[0].name;
+          const term_days = custRows[0].payment_term_days || 0;
+          
+          const { rows: invRows } = await client.query(
+            `INSERT INTO invoices
+               (invoice_number, subtotal, tax_rate, tax_amount,
+                total_amount, due_date, order_id, customer_name)
+             VALUES ($1, $2, $3, $4, $5,
+                     CURRENT_DATE + $6::INT * INTERVAL '1 day', $7, $8)
+             RETURNING *`,
+            [invoice_number, subtotal, tax_rate, tax_amount,
+             total_amount, term_days, id, customer_name]
+          );
+          
+          await client.query('COMMIT');
+          return { order, invoice: invRows[0] };
+        }
+      }
 
+      // Walk-in customer (no customer_id) - default due date 0 days
       const { rows: invRows } = await client.query(
         `INSERT INTO invoices
            (invoice_number, subtotal, tax_rate, tax_amount,
-            total_amount, due_date, order_id)
+            total_amount, due_date, order_id, customer_name)
          VALUES ($1, $2, $3, $4, $5,
-                 CURRENT_DATE + $6::INT * INTERVAL '1 day', $7)
+                 CURRENT_DATE, $6, $7)
          RETURNING *`,
         [invoice_number, subtotal, tax_rate, tax_amount,
-         total_amount, term_days, id]
+         total_amount, id, customer_name]
       );
 
       await client.query('COMMIT');

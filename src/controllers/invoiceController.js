@@ -35,7 +35,18 @@ const InvoiceController = {
       const items    = await OrderItemModel.findByOrder(invoice.order_id);
       const payments = await PaymentModel.findByInvoice(invoice.id);
 
-      res.json({ success: true, data: { ...invoice, items, payments } });
+      // Ensure customer_name is properly set (fallback to 'Walk-in Customer')
+      const customerName = invoice.customer_name || 'Walk-in Customer';
+
+      res.json({ 
+        success: true, 
+        data: { 
+          ...invoice, 
+          customer_name: customerName,
+          items, 
+          payments 
+        } 
+      });
     } catch (err) {
       next(err);
     }
@@ -46,7 +57,17 @@ const InvoiceController = {
     try {
       const invoice = await InvoiceModel.findByOrder(req.params.order_id);
       if (!invoice) return res.status(404).json({ success: false, message: 'Invoice not found for this order' });
-      res.json({ success: true, data: invoice });
+      
+      // Ensure customer_name is properly set
+      const customerName = invoice.customer_name || 'Walk-in Customer';
+      
+      res.json({ 
+        success: true, 
+        data: { 
+          ...invoice, 
+          customer_name: customerName 
+        } 
+      });
     } catch (err) {
       next(err);
     }
