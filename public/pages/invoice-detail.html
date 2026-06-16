@@ -1935,26 +1935,31 @@
 </body>
 </html>`;
 
-    // Use html2pdf with improved settings for high quality
+    // High-quality, compact PDF settings
+    // - PNG over JPEG: lossless so text & borders stay razor-sharp, no JPEG artefacts
+    // - scale 2 (not 3): 2× is ~150 DPI on A4 — crisp for print, half the pixel count of scale 3
+    // - jsPDF compress: true deflates the PDF stream significantly
+    // - pagebreak css: respects page-break rules so nothing gets clipped mid-row
     const opt = {
-      margin:        [0, 0, 0, 0],
+      margin:        [8, 10, 8, 10],   // small margin (mm) so content doesn't kiss the edge
       filename,
-      image:         { type: 'jpeg', quality: 0.98 },
-      html2canvas:   { 
-        scale: 3, 
-        useCORS: true, 
-        logging: false, 
+      image:         { type: 'png' },  // lossless — no quality knob needed
+      html2canvas:   {
+        scale: 2,                      // 2× = crisp text without the filesize of 3×
+        useCORS: true,
+        logging: false,
         backgroundColor: '#ffffff',
         letterRendering: true,
-        width: 794
+        dpi: 150,                      // hint for consistent rendering density
+        width: 794                     // A4 pixel width at 96 dpi base
       },
-      jsPDF:         { 
-        unit: 'mm', 
-        format: 'a4', 
+      jsPDF:         {
+        unit: 'mm',
+        format: 'a4',
         orientation: 'portrait',
-        compress: true
+        compress: true                 // deflate-compresses the internal PDF streams
       },
-      pagebreak:     { mode: ['avoid-all'] },
+      pagebreak:     { mode: ['css', 'legacy'] }, // respect page-break-inside / avoid-all via CSS
     };
 
     html2pdf().set(opt).from(html, 'string').save().then(() => {
